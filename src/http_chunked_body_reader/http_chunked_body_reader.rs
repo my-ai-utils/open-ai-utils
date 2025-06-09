@@ -179,4 +179,16 @@ data: {"id":"chatcmpl-BgGPdEggKnxk1Pi4v7OCisP3t1eKi","object":"chat.completion.c
 
         assert!(next_data.is_none());
     }
+
+    #[test]
+    fn parse_func() {
+        let mut body_reader = HttpOpenAiChunkedBodyReader::default();
+        let next_chunk = r#"data: {"id":"chatcmpl-BgcBfWT77LRKMykIMKs2hJnCo6QYh","object":"chat.completion.chunk","created":1749496267,"model":"gpt-4o-2024-08-06","service_tier":"default","system_fingerprint":"fp_07871e2ad8","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\",\""}}]},"logprobs":null,"finish_reason":null}]}"#;
+
+        body_reader.extend(next_chunk.as_bytes());
+
+        let next = body_reader.get_next_data().unwrap().unwrap();
+
+        println!("{:?}", next.get_func());
+    }
 }

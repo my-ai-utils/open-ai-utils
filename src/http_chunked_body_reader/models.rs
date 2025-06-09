@@ -50,8 +50,6 @@ pub struct ChunkChoseDelta {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ToolsCallModel {
-    #[serde(rename = "type")]
-    pub r#type: String,
     pub function: Option<FunctionCallModel>,
 }
 
