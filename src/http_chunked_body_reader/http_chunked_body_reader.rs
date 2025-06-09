@@ -56,14 +56,14 @@ impl HttpOpenAiChunkedBodyReader {
 }
 
 fn check_slice(slice: &[u8]) -> Result<Option<super::ChunkResultModel>, ()> {
-    println!("```{}```", std::str::from_utf8(slice).unwrap());
+    //   println!("```{}```", std::str::from_utf8(slice).unwrap());
     let pos_from = trim_from_begin(slice);
     let pos_to = trim_from_end(slice);
 
     let slice = &slice[pos_from..pos_to];
 
-    println!("```{}```", std::str::from_utf8(slice).unwrap());
-    println!("----");
+    //  println!("```{}```", std::str::from_utf8(slice).unwrap());
+    //  println!("----");
 
     if slice == END_PACKET {
         return Ok(None);
