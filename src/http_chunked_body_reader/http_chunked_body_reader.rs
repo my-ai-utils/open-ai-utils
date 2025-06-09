@@ -5,11 +5,11 @@ const PACKET_MARKET: &'static [u8] = b"data:";
 const END_PACKET: &'static [u8] = b"[DONE]";
 
 #[derive(Default)]
-pub struct HttpChunkedBodyReader {
+pub struct HttpOpenAiChunkedBodyReader {
     buffer: VecIterator,
 }
 
-impl HttpChunkedBodyReader {
+impl HttpOpenAiChunkedBodyReader {
     pub fn extend(&mut self, data: &[u8]) {
         self.buffer.extend(data);
     }
@@ -118,11 +118,11 @@ impl NextDataErr {
 
 #[cfg(test)]
 mod tests {
-    use crate::http_chunked_body_reader::HttpChunkedBodyReader;
+    use crate::http_chunked_body_reader::HttpOpenAiChunkedBodyReader;
 
     #[test]
     fn test_reading() {
-        let mut body_reader = HttpChunkedBodyReader::default();
+        let mut body_reader = HttpOpenAiChunkedBodyReader::default();
 
         let next_data = body_reader.get_next_data().unwrap_err();
 
