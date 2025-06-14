@@ -6,157 +6,70 @@ pub trait FunctionTypeDescription {
     ) -> serde_json::Value;
 }
 
-impl FunctionTypeDescription for Option<String> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("string", description, default, enum_data)
-    }
+pub trait GetJsonTypeName {
+    const NAME: &'static str;
 }
 
-impl FunctionTypeDescription for Option<f64> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("number", description, default, enum_data)
-    }
+impl GetJsonTypeName for u8 {
+    const NAME: &'static str = "number";
 }
 
-impl FunctionTypeDescription for Option<f32> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("number", description, default, enum_data)
-    }
+impl GetJsonTypeName for i8 {
+    const NAME: &'static str = "number";
 }
 
-impl FunctionTypeDescription for Option<u32> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("number", description, default, enum_data)
-    }
+impl GetJsonTypeName for u16 {
+    const NAME: &'static str = "number";
 }
 
-impl FunctionTypeDescription for Option<i32> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("number", description, default, enum_data)
-    }
+impl GetJsonTypeName for i16 {
+    const NAME: &'static str = "number";
 }
 
-impl FunctionTypeDescription for Option<u64> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("number", description, default, enum_data)
-    }
+impl GetJsonTypeName for u32 {
+    const NAME: &'static str = "number";
 }
 
-impl FunctionTypeDescription for Option<i64> {
-    fn get_type_description(
-        description: &str,
-        default: Option<&str>,
-        enum_data: Option<&[&str]>,
-    ) -> serde_json::Value {
-        generate_description_of_opt_parameter("number", description, default, enum_data)
-    }
+impl GetJsonTypeName for i32 {
+    const NAME: &'static str = "number";
 }
 
-fn generate_description_of_opt_parameter(
-    tp: &str,
-    description: &str,
-    default: Option<&str>,
-    enum_data: Option<&[&str]>,
-) -> serde_json::Value {
-    let Some(enum_data) = enum_data else {
-        if let Some(default) = default {
-            return serde_json::json! {
+impl GetJsonTypeName for u64 {
+    const NAME: &'static str = "number";
+}
 
-               {
-                    "anyOf": [
-                        {
-                            "type": tp
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "default": default,
-                    "description": description,
+impl GetJsonTypeName for i64 {
+    const NAME: &'static str = "number";
+}
 
-                }
+impl GetJsonTypeName for f64 {
+    const NAME: &'static str = "number";
+}
 
-            };
-        } else {
-            return serde_json::json! {
+impl GetJsonTypeName for f32 {
+    const NAME: &'static str = "number";
+}
 
-               {
-                    "anyOf": [
-                        {
-                            "type": tp
-                        },
-                        {
-                            "type": "null"
-                        }
-                    ],
-                    "default": null,
-                    "description": description
-                }
+impl GetJsonTypeName for usize {
+    const NAME: &'static str = "number";
+}
 
-            };
-        }
-    };
+impl GetJsonTypeName for isize {
+    const NAME: &'static str = "number";
+}
 
-    if let Some(default) = default {
-        return serde_json::json! {
+impl GetJsonTypeName for bool {
+    const NAME: &'static str = "boolean";
+}
 
-           {
-                "anyOf": [
-                    {
-                        "enum": enum_data,
-                        "type": tp
-                    },
-                    {
-                        "type": "null"
-                    }
-                ],
-                "default": default,
-                "description": description,
+impl GetJsonTypeName for String {
+    const NAME: &'static str = "string";
+}
 
-            }
+impl GetJsonTypeName for &'_ str {
+    const NAME: &'static str = "string";
+}
 
-        };
-    } else {
-        return serde_json::json! {
-
-           {
-                "anyOf": [
-                    {
-                        "enum": enum_data,
-                        "type": tp
-                    },
-                    {
-                        "type": "null"
-                    }
-                ],
-                "default": null,
-                "description": description
-            }
-
-        };
-    }
+impl GetJsonTypeName for &'_ String {
+    const NAME: &'static str = "string";
 }

@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use types_reader::{AnyValueAsStr, StructProperty};
+use types_reader::{AnyValueAsStr, PropertyType, StructProperty};
 
 pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error> {
     let prop_name = prop.name.as_str();
@@ -27,12 +27,23 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
     let value = value.as_string()?;
     let value = value.as_str();
 
-    let result = quote::quote! {
-       properties.insert(
-        #prop_name.into(),
-        Option::<String>::get_type_description(#value, None, #enum_to_render),
-    );
-     };
+    let result = if let PropertyType::OptionOf(opt_tp) = prop.ty {
+        let as_token = opt_tp.get_token_stream();
+        quote::quote! {
+           properties.insert(
+            #prop_name.into(),
+            Option::<#as_token>::get_type_description(#value, None, #enum_to_render),
+        );
+         }
+    } else {
+        let token = prop.ty.get_token_stream();
+        quote::quote! {
+           properties.insert(
+            #prop_name.into(),
+            #token::get_type_description(#value, None, #enum_to_render),
+        );
+         }
+    };
 
     Ok(result)
 }
