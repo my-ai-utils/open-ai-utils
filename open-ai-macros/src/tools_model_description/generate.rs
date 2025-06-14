@@ -26,19 +26,8 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
             ));
         }
 
-        let prop_name = prop.name.as_str();
-        let attr = prop.attrs.get_attr("property")?;
-
-        let value = attr.get_value_from_single_or_named("description")?;
-        let value = value.as_string()?;
-        let value = value.as_str();
-
-        fields_to_render.push(quote::quote! {
-           properties.insert(
-            #prop_name.into(),
-            Option::<String>::get_type_description(#value, None),
-        );
-        });
+        let property = super::generate_property(prop)?;
+        fields_to_render.push(property);
     }
 
     if function_description.is_none() {

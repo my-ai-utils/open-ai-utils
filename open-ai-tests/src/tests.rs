@@ -11,6 +11,8 @@ pub struct MyRequestModel {
     pub service: Option<String>,
     #[property(description: "Address of dealer")]
     pub addr: Option<String>,
+    #[property(enum:["NEW", "CPO"], description: "Vehicle condition (NEW/CPO). Defaults to None")]
+    pub condition: Option<String>,
 }
 
 #[derive(OpenAiFunctionModel)]
@@ -41,12 +43,12 @@ impl MyRequestModel {
 
         properties.insert(
             "city".into(),
-            Option::<String>::get_type_description("city", None),
+            Option::<String>::get_type_description("city", None, None),
         );
 
         properties.insert(
             "service".into(),
-            Option::<String>::get_type_description("service", None),
+            Option::<String>::get_type_description("service", None, None),
         );
 
         params.insert("properties".into(), properties.into());
