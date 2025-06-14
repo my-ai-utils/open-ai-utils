@@ -15,21 +15,21 @@ fn generate_description_of_opt_of_vec_parameter<Tp: GetJsonTypeName>(
     default: Option<&str>,
     enum_data: Option<&[&str]>,
 ) -> serde_json::Value {
-    let item_description = Option::<Tp>::get_type_description(description, default, enum_data);
+    let item_description = Tp::get_type_description(description, default, enum_data);
 
     if let Some(enum_data) = enum_data {
         return serde_json::json! {
            {
                  "anyOf": [
-                                {
+                            {
                                     "type": "array",
                                     "items": item_description,
                                     "enum": enum_data,
-                                },
-                                {
+                            },
+                            {
                                     "type": "null"
-                                }
-                            ],
+                            }
+                           ],
                 "default": default,
                 "description": description,
            }
