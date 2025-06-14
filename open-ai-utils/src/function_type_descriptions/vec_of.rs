@@ -15,55 +15,27 @@ fn generate_description_of_vec_parameter<Tp: GetJsonTypeName + FunctionTypeDescr
     default: Option<&str>,
     enum_data: Option<&[&str]>,
 ) -> serde_json::Value {
-    let tp = Tp::NAME;
     let item_description = Tp::get_type_description(description, default, enum_data);
 
-    let Some(enum_data) = enum_data else {
+    if let Some(enum_data) = enum_data {
         return serde_json::json! {
            {
                 "type": "array",
-                "items": item_description
+                "enum": enum_data,
+                "items": item_description,
+                "description": description
            }
 
         };
     };
 
-    if let Some(default) = default {
-        return serde_json::json! {
+    return serde_json::json! {
 
-           {
-                "anyOf": [
-                    {
-                        "enum": enum_data,
-                        "type": tp
-                    },
-                    {
-                        "type": "null"
-                    }
-                ],
-                "default": default,
-                "description": description,
+       {
+           "type": "array",
+            "items": item_description,
+            "description": description
+        }
 
-            }
-
-        };
-    } else {
-        return serde_json::json! {
-
-           {
-                "anyOf": [
-                    {
-                        "enum": enum_data,
-                        "type": tp
-                    },
-                    {
-                        "type": "null"
-                    }
-                ],
-                "default": null,
-                "description": description
-            }
-
-        };
-    }
+    };
 }
