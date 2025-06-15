@@ -1,5 +1,5 @@
 [package]
-name = "open-ai-tests"
+name = "open-ai-macros-tests"
 version = "0.4.1"
 edition = "2021"
 

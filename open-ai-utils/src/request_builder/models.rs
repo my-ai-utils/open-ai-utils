@@ -12,7 +12,7 @@ pub struct OpenAiMessageModel {
     pub role: String,
     pub content: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tool_calls: Option<ToolCallsModel>,
+    pub tool_calls: Option<Vec<ToolCallsModel>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_call_id: Option<String>,
 }
@@ -21,7 +21,7 @@ pub struct OpenAiMessageModel {
 pub struct ToolCallsModel {
     pub id: String,
     #[serde(rename = "type")]
-    pub r#type: String,
+    pub tp: String,
     pub function: ToolCallFunctionDescription,
 }
 

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use serde::de::DeserializeOwned;
 
-use crate::{FunctionDescriptionJsonModel, FunctionToolCallDescription};
+use crate::FunctionToolCallDescription;
 
 #[async_trait::async_trait]
 pub trait ToolFunction<ParamsType: FunctionToolCallDescription> {
@@ -17,19 +17,16 @@ pub trait ToolFunctionAbstract {
 pub struct ToolFunctionHolder<ParamsType: FunctionToolCallDescription> {
     inner: Arc<dyn ToolFunction<ParamsType> + Send + Sync + 'static>,
     pub func_name: &'static str,
-    pub func_json_description: FunctionDescriptionJsonModel,
 }
 
 impl<ParamsType: FunctionToolCallDescription> ToolFunctionHolder<ParamsType> {
     pub fn new(
         func_name: &'static str,
-        func_json_description: FunctionDescriptionJsonModel,
         func: Arc<dyn ToolFunction<ParamsType> + Send + Sync + 'static>,
     ) -> Self {
         Self {
             func_name,
             inner: func,
-            func_json_description,
         }
     }
 }

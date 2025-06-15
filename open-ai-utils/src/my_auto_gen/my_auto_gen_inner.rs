@@ -1,36 +1,40 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
-use tokio::sync::Mutex;
-
-use crate::my_auto_gen::ToolFunctionAbstract;
+use crate::{FunctionDescriptionJsonModel, my_auto_gen::ToolFunctionAbstract};
 
 pub struct MyAutoGenInner {
-    tool_functions:
-        Arc<Mutex<HashMap<&'static str, Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>>>>,
+    tool_functions: Vec<(
+        &'static str,
+        Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>,
+    )>,
+    func_json_descriptions: Vec<FunctionDescriptionJsonModel>,
 }
 
 impl MyAutoGenInner {
-    pub async fn register(
-        &self,
+    pub fn register(
+        &mut self,
         func_name: &'static str,
+        description: FunctionDescriptionJsonModel,
         tool_function: Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>,
     ) {
-        let mut write_access = self.tool_functions.lock().await;
-        write_access.insert(func_name, tool_function);
+        self.tool_functions.push((func_name, tool_function));
+
+        self.func_json_descriptions.push(description);
     }
 
-    pub async fn execute(&self, func_name: &str, params: &str) -> String {
-        let func = {
-            let read_access = self.tool_functions.lock().await;
-            read_access.get(func_name).cloned()
-        };
+    pub fn get_func_descriptions(&self) -> &[FunctionDescriptionJsonModel] {
+        self.func_json_descriptions.as_slice()
+    }
 
-        if func.is_none() {
-            panic!("tool_call with func_name '{}' is not registered", func_name);
+    pub fn get_func(
+        &self,
+        func_name: &str,
+    ) -> Option<Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>> {
+        for itm in &self.tool_functions {
+            if itm.0 == func_name {
+                return Some(itm.1.clone());
+            }
         }
-
-        let func = func.unwrap();
-
-        func.call(params).await
+        None
     }
 }

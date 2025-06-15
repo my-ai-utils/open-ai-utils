@@ -1,2 +1,2 @@
 [workspace]
-members = ["open-ai-utils", "open-ai-macros", "open-ai-tests"]
+members = ["open-ai-utils", "open-ai-macros", "open-ai-macros-tests"]

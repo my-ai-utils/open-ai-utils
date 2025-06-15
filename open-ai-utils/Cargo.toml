@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 rust-extensions = { tag = "0.1.5", git = "https://github.com/MyJetTools/rust-extensions.git" }
 
+flurl = { tag = "0.6.1", git = "https://github.com/MyJetTools/fl-url.git" }
+
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
 open-ai-macros = { path = "../open-ai-macros" }
