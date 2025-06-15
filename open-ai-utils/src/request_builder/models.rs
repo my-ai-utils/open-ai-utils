@@ -3,7 +3,7 @@ use serde::*;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiRequestModel {
     pub messages: Vec<OpenAiMessageModel>,
-    pub tools: Vec<FunctionDescriptionJsonModel>,
+    pub tools: Vec<ToolsDescriptionJsonModel>,
     pub model: String,
 }
 
@@ -36,4 +36,11 @@ pub struct FunctionDescriptionJsonModel {
     pub name: String,
     pub description: String,
     pub parameters: serde_json::Value,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ToolsDescriptionJsonModel {
+    #[serde(rename = "type")]
+    pub tp: String,
+    pub function: Option<FunctionDescriptionJsonModel>,
 }

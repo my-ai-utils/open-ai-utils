@@ -1,12 +1,14 @@
 use std::sync::Arc;
 
-use flurl::{FlUrl, FlUrlError};
+use flurl::FlUrl;
+use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
 
 use crate::{
     FunctionDescriptionJsonModel, FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
-        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, ToolFunction, ToolFunctionHolder,
+        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, TechRequestLogger, ToolFunction,
+        ToolFunctionHolder,
     },
 };
 
@@ -15,6 +17,11 @@ pub struct MyAutoGen {
 }
 
 impl MyAutoGen {
+    pub fn new() -> Self {
+        Self {
+            inner: MyAutoGenInner::new(),
+        }
+    }
     pub fn register_function<
         ParamType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static,
         TToolFunction: ToolFunction<ParamType> + Send + Sync + 'static,
@@ -48,25 +55,37 @@ impl MyAutoGen {
         &self,
         settings: &AutoGenSettings,
         rb: &mut OpenAiRequestBodyBuilder,
+        tech_logs: &mut TechRequestLogger,
     ) -> Result<(), String> {
         self.populate_request_builder(rb);
 
         loop {
-            let response = self
+            let req_ts = DateTimeAsMicroseconds::now();
+            let req_txt = serde_json::to_string(rb.get_model()).unwrap();
+
+            let (model, response_body) = self
                 .execute_request(settings, &rb)
                 .await
                 .map_err(|itm| itm.to_string())?;
 
-            let message_to_analyze = match response.peek_message() {
+            tech_logs.add(super::TechRequestLogItem {
+                req_ts: req_ts,
+                request: req_txt,
+                resp_ts: DateTimeAsMicroseconds::now(),
+                response: response_body.clone(),
+            });
+
+            let message_to_analyze = match model.peek_message() {
                 Some(message_to_analyze) => message_to_analyze,
                 None => {
-                    return Err(format!("Invalid response {:?}", response));
+                    return Err(format!("Invalid response {:?}", response_body));
                 }
             };
 
             match message_to_analyze {
                 super::OpenAiResponse::Message(message) => {
                     rb.add_assistant_message(message.to_string());
+                    return Ok(());
                 }
                 super::OpenAiResponse::ToolCall(tool_call_models) => {
                     rb.add_assistant_response_as_tool_calls(tool_call_models);
@@ -94,24 +113,37 @@ impl MyAutoGen {
         &self,
         settings: &AutoGenSettings,
         rb: &OpenAiRequestBodyBuilder,
-    ) -> Result<OpenAiRespModel, FlUrlError> {
-        let mut response = FlUrl::new(settings.url.as_str())
+    ) -> Result<(OpenAiRespModel, String), String> {
+        let response = FlUrl::new(settings.url.as_str())
             .with_header(
                 "Authorization",
                 format!("Bearer {}", settings.api_key.as_str()),
             )
             .post_json(rb.get_model())
-            .await?;
+            .await
+            .map_err(|itm| itm.to_string())?;
 
-        let body = response.get_body_as_str().await?;
+        let status_code = response.get_status_code();
 
-        println!("OpenAi resp: ```{}```", body);
+        if status_code != 200 {
+            return Err(format!("Status code: {}", status_code));
+        }
 
-        let model: Result<OpenAiRespModel, _> = serde_json::from_str(body);
+        let body = response
+            .receive_body()
+            .await
+            .map_err(|itm| itm.to_string())?;
+
+        let model: Result<OpenAiRespModel, _> = serde_json::from_slice(body.as_slice());
 
         match model {
             Ok(model) => {
-                return Ok(model);
+                let body = match std::str::from_utf8(body.as_slice()) {
+                    Ok(body_as_str) => body_as_str.to_string(),
+                    Err(_) => body.as_slice().into_base64(),
+                };
+
+                return Ok((model, body));
             }
             Err(err) => {
                 println!("Can not deserialize JsonModel. Err: `{}`", err);

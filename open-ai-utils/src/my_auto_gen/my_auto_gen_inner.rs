@@ -11,6 +11,12 @@ pub struct MyAutoGenInner {
 }
 
 impl MyAutoGenInner {
+    pub fn new() -> Self {
+        Self {
+            tool_functions: Default::default(),
+            func_json_descriptions: Default::default(),
+        }
+    }
     pub fn register(
         &mut self,
         func_name: &'static str,

@@ -25,10 +25,11 @@ impl OpenAiRequestBodyBuilder {
         }
     }
 
-    pub fn add_user_message(&mut self, message: String) {
+    pub fn add_user_message(&mut self, message: impl Into<StrOrString<'static>>) {
+        let message = message.into();
         self.model.messages.push(OpenAiMessageModel {
             role: "user".to_owned(),
-            content: Some(message),
+            content: Some(message.to_string()),
             tool_calls: None,
             tool_call_id: None,
         });
@@ -102,10 +103,17 @@ impl OpenAiRequestBodyBuilder {
     }
 
     pub fn add_tools_call_description(&mut self, func_description: FunctionDescriptionJsonModel) {
-        self.model.tools.push(func_description);
+        self.model.tools.push(ToolsDescriptionJsonModel {
+            tp: "function".to_string(),
+            function: Some(func_description),
+        });
     }
 
     pub fn get_model(&self) -> &OpenAiRequestModel {
         &self.model
+    }
+
+    pub fn get_last_message(&self) -> &OpenAiMessageModel {
+        self.model.messages.last().unwrap()
     }
 }
