@@ -1,10 +1,9 @@
 use serde::*;
-use serde_json::Value;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiRequestModel {
     pub messages: Vec<OpenAiMessageModel>,
-    pub tools: Vec<Value>,
+    pub tools: Vec<FunctionDescriptionJsonModel>,
     pub model: String,
 }
 
@@ -30,4 +29,11 @@ pub struct ToolCallsModel {
 pub struct ToolCallFunctionDescription {
     pub name: String,
     pub arguments: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FunctionDescriptionJsonModel {
+    pub name: String,
+    pub description: String,
+    pub parameters: serde_json::Value,
 }

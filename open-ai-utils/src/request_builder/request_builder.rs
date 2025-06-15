@@ -1,7 +1,5 @@
 use rust_extensions::StrOrString;
 
-use crate::FunctionToolCallDescription;
-
 use super::*;
 
 pub struct OpenAiRequestBodyBuilder {
@@ -71,8 +69,8 @@ impl OpenAiRequestBodyBuilder {
         }
     }
 
-    pub fn add_tool_calls<TToolCallModel: FunctionToolCallDescription>(&mut self) {
-        self.model.tools.push(TToolCallModel::get_description());
+    pub fn add_tool_calls(&mut self, func_description: FunctionDescriptionJsonModel) {
+        self.model.tools.push(func_description);
     }
 
     pub fn get_model(&self) -> &OpenAiRequestModel {
