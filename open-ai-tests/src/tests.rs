@@ -23,14 +23,30 @@ pub struct MyRequestModel {
 
 #[cfg(test)]
 mod tests {
+    use open_ai_utils::OpenAiRequestBodyBuilder;
+
     use crate::tests::MyRequestModel;
 
     #[test]
     fn test_generation() {
+        use open_ai_utils::FunctionToolCallDescription;
         let description = MyRequestModel::get_description();
 
         let json = serde_json::to_string_pretty(&description).unwrap();
 
         println!("{}", json);
+    }
+    #[test]
+    fn test_builder_and_model() {
+        let mut builder = OpenAiRequestBodyBuilder::new(
+            "test_system_prompt_data",
+            open_ai_utils::LlmModel::Gpt4o,
+        );
+
+        builder.add_tool_calls::<MyRequestModel>();
+
+        let json_str = serde_json::to_string_pretty(builder.get_model()).unwrap();
+
+        println!("{}", json_str);
     }
 }

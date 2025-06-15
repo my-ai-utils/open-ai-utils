@@ -38,13 +38,13 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
 
     let result = quote::quote! {
 
-        impl #struct_name{
+        impl open_ai_utils::FunctionToolCallDescription  for #struct_name{
 
-          pub fn get_description() -> serde_json::Value {
-         use open_ai_utils::FunctionTypeDescription;
-        let mut result = serde_json::Map::new();
+         fn get_description() -> serde_json::Value {
+           use open_ai_utils::FunctionTypeDescription;
+           let mut result = serde_json::Map::new();
 
-        result.insert("type".into(), "function".to_owned().into());
+           result.insert("type".into(), "function".to_owned().into());
 
         let mut function = serde_json::Map::new();
 

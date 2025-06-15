@@ -1,3 +1,7 @@
+pub trait FunctionToolCallDescription {
+    fn get_description() -> serde_json::Value;
+}
+
 pub trait FunctionTypeDescription {
     fn get_type_description(
         description: &str,

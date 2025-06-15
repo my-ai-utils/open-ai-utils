@@ -1,16 +1,23 @@
-use serde::*;
+use rust_extensions::StrOrString;
+
+use crate::FunctionToolCallDescription;
+
+use super::*;
 
 pub struct OpenAiRequestBodyBuilder {
     model: OpenAiRequestModel,
 }
 
 impl OpenAiRequestBodyBuilder {
-    pub fn new(system_prompt: String) -> Self {
+    pub fn new(system_prompt: impl Into<StrOrString<'static>>, model: LlmModel) -> Self {
+        let system_prompt: StrOrString<'static> = system_prompt.into();
         Self {
             model: OpenAiRequestModel {
+                model: model.to_string(),
+                tools: vec![],
                 messages: vec![OpenAiMessageModel {
                     role: "system".to_owned(),
-                    content: Some(system_prompt),
+                    content: Some(system_prompt.to_string()),
                     tool_calls: None,
                     tool_call_id: None,
                 }],
@@ -36,36 +43,14 @@ impl OpenAiRequestBodyBuilder {
         });
     }
 
+    pub fn add_tool_calls<TToolCallModel: FunctionToolCallDescription>(&mut self) {
+        self.model.tools.push(FunctionToolCallModel {
+            tp: "function".to_string(),
+            function: TToolCallModel::get_description(),
+        });
+    }
+
     pub fn get_model(&self) -> &OpenAiRequestModel {
         &self.model
     }
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct OpenAiRequestModel {
-    pub messages: Vec<OpenAiMessageModel>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct OpenAiMessageModel {
-    pub role: String,
-    pub content: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tool_calls: Option<ToolCallsModel>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tool_call_id: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ToolCallsModel {
-    pub id: String,
-    #[serde(rename = "type")]
-    pub r#type: String,
-    pub function: ToolCallFunctionDescription,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ToolCallFunctionDescription {
-    pub name: String,
-    pub arguments: String,
 }
