@@ -43,11 +43,36 @@ impl OpenAiRequestBodyBuilder {
         });
     }
 
+    pub fn get_history_to_serialize(&self) -> &[OpenAiMessageModel] {
+        &self.model.messages[1..]
+    }
+
+    pub fn from_history(
+        system_prompt: impl Into<StrOrString<'static>>,
+        history: Vec<OpenAiMessageModel>,
+        model: LlmModel,
+    ) -> Self {
+        let system_prompt: StrOrString<'static> = system_prompt.into();
+        let mut messages = vec![OpenAiMessageModel {
+            role: "system".to_owned(),
+            content: Some(system_prompt.to_string()),
+            tool_calls: None,
+            tool_call_id: None,
+        }];
+
+        messages.extend(history);
+
+        Self {
+            model: OpenAiRequestModel {
+                model: model.to_string(),
+                tools: vec![],
+                messages,
+            },
+        }
+    }
+
     pub fn add_tool_calls<TToolCallModel: FunctionToolCallDescription>(&mut self) {
-        self.model.tools.push(FunctionToolCallModel {
-            tp: "function".to_string(),
-            function: TToolCallModel::get_description(),
-        });
+        self.model.tools.push(TToolCallModel::get_description());
     }
 
     pub fn get_model(&self) -> &OpenAiRequestModel {

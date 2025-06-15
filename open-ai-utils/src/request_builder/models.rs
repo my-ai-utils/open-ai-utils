@@ -4,7 +4,7 @@ use serde_json::Value;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiRequestModel {
     pub messages: Vec<OpenAiMessageModel>,
-    pub tools: Vec<FunctionToolCallModel>,
+    pub tools: Vec<Value>,
     pub model: String,
 }
 
@@ -30,11 +30,4 @@ pub struct ToolCallsModel {
 pub struct ToolCallFunctionDescription {
     pub name: String,
     pub arguments: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct FunctionToolCallModel {
-    #[serde(rename = "type")]
-    pub tp: String,
-    pub function: Value,
 }
