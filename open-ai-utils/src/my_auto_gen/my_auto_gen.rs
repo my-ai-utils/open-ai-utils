@@ -114,11 +114,13 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: &OpenAiRequestBodyBuilder,
     ) -> Result<(OpenAiRespModel, String), String> {
-        let response = FlUrl::new(settings.url.as_str())
-            .with_header(
-                "Authorization",
-                format!("Bearer {}", settings.api_key.as_str()),
-            )
+        let mut fl_url = FlUrl::new(settings.url.as_str());
+
+        if let Some(api_key) = settings.api_key.as_ref() {
+            fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
+        };
+
+        let response = fl_url
             .post_json(rb.get_model())
             .await
             .map_err(|itm| itm.to_string())?;
