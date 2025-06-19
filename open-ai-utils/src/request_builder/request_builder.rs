@@ -28,6 +28,18 @@ impl OpenAiRequestBodyBuilder {
         }
     }
 
+    pub fn set_max_tokens(&mut self, value: usize) {
+        self.model.max_tokens = Some(value);
+    }
+
+    pub fn set_top_p(&mut self, value: f64) {
+        self.model.top_p = Some(value);
+    }
+
+    pub fn set_temperature(&mut self, value: f64) {
+        self.model.temperature = Some(value);
+    }
+
     pub fn add_user_message(&mut self, message: impl Into<StrOrString<'static>>) {
         let message = message.into();
         self.model.messages.push(OpenAiMessageModel {
