@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use flurl::FlUrl;
 use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
@@ -114,7 +114,7 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: &OpenAiRequestBodyBuilder,
     ) -> Result<(OpenAiRespModel, String), String> {
-        let mut fl_url = FlUrl::new(settings.url.as_str());
+        let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
 
         if let Some(api_key) = settings.api_key.as_ref() {
             fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
