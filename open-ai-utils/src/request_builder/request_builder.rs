@@ -21,6 +21,9 @@ impl OpenAiRequestBodyBuilder {
                     tool_calls: None,
                     tool_call_id: None,
                 }],
+                max_tokens: None,
+                temperature: None,
+                top_p: None,
             },
         }
     }
