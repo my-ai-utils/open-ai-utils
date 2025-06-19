@@ -101,6 +101,9 @@ impl OpenAiRequestBodyBuilder {
                 model: model.to_string(),
                 tools: vec![],
                 messages,
+                max_tokens: None,
+                temperature: None,
+                top_p: None,
             },
         }
     }
