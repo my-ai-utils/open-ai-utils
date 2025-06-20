@@ -120,6 +120,10 @@ impl MyAutoGen {
             fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
         };
 
+        if settings.do_not_reuse_connection.unwrap_or(false) {
+            fl_url = fl_url.do_not_reuse_connection();
+        }
+
         let response = fl_url
             .post_json(rb.get_model())
             .await
