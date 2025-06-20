@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use flurl::FlUrl;
+use flurl::{FlResponseAsStream, FlUrl};
 use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
 
@@ -156,5 +156,28 @@ impl MyAutoGen {
                 panic!("Can not deserialize JsonModel. Err: `{}`", err);
             }
         }
+    }
+
+    pub async fn execute_request_as_stream(
+        &self,
+        settings: &AutoGenSettings,
+        rb: &OpenAiRequestBodyBuilder,
+    ) -> Result<FlResponseAsStream, String> {
+        let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
+
+        if let Some(api_key) = settings.api_key.as_ref() {
+            fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
+        };
+
+        if settings.do_not_reuse_connection.unwrap_or(false) {
+            fl_url = fl_url.do_not_reuse_connection();
+        }
+
+        let response = fl_url
+            .post_json(rb.get_model())
+            .await
+            .map_err(|itm| itm.to_string())?;
+
+        Ok(response.get_body_as_stream())
     }
 }

@@ -24,6 +24,7 @@ impl OpenAiRequestBodyBuilder {
                 max_tokens: None,
                 temperature: None,
                 top_p: None,
+                stream: None,
             },
         }
     }
@@ -38,6 +39,10 @@ impl OpenAiRequestBodyBuilder {
 
     pub fn set_temperature(&mut self, value: f64) {
         self.model.temperature = Some(value);
+    }
+
+    pub fn set_stream(&mut self) {
+        self.model.stream = Some(true);
     }
 
     pub fn add_user_message(&mut self, message: impl Into<StrOrString<'static>>) {
@@ -116,6 +121,7 @@ impl OpenAiRequestBodyBuilder {
                 max_tokens: None,
                 temperature: None,
                 top_p: None,
+                stream: None,
             },
         }
     }
