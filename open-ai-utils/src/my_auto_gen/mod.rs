@@ -10,3 +10,7 @@ mod open_ai_resp_model;
 pub use open_ai_resp_model::*;
 mod tech_request_log;
 pub use tech_request_log::*;
+mod remote_tool_function;
+pub use remote_tool_function::*;
+mod local_tool_functions;
+pub use local_tool_functions::*;

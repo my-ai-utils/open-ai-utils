@@ -1,46 +1,49 @@
 use std::sync::Arc;
 
-use crate::{FunctionDescriptionJsonModel, my_auto_gen::ToolFunctionAbstract};
+use crate::my_auto_gen::{LocalToolFunctions, RemoteToolFunctionsHandler, ToolFunctionAbstract};
 
-pub struct MyAutoGenInner {
-    tool_functions: Vec<(
-        &'static str,
-        Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>,
-    )>,
-    func_json_descriptions: Vec<FunctionDescriptionJsonModel>,
+pub enum MyAutoGenInner {
+    NotInitialized,
+    LocalToolFunctions(LocalToolFunctions),
+    RemoteToolFunctions(Arc<RemoteToolFunctionsHandler>),
 }
 
 impl MyAutoGenInner {
     pub fn new() -> Self {
-        Self {
-            tool_functions: Default::default(),
-            func_json_descriptions: Default::default(),
+        Self::NotInitialized
+    }
+
+    pub fn unwrap_as_local_functions_mut(&mut self) -> &mut LocalToolFunctions {
+        match self {
+            MyAutoGenInner::NotInitialized => {
+                panic!("Not Initialized");
+            }
+            MyAutoGenInner::LocalToolFunctions(local_tool_functions) => local_tool_functions,
+            MyAutoGenInner::RemoteToolFunctions(_) => {
+                panic!("Remote Tool Functions");
+            }
         }
-    }
-    pub fn register(
-        &mut self,
-        func_name: &'static str,
-        description: FunctionDescriptionJsonModel,
-        tool_function: Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>,
-    ) {
-        self.tool_functions.push((func_name, tool_function));
-
-        self.func_json_descriptions.push(description);
-    }
-
-    pub fn get_func_descriptions(&self) -> &[FunctionDescriptionJsonModel] {
-        self.func_json_descriptions.as_slice()
     }
 
     pub fn get_func(
         &self,
         func_name: &str,
     ) -> Option<Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>> {
-        for itm in &self.tool_functions {
-            if itm.0 == func_name {
-                return Some(itm.1.clone());
+        match self {
+            MyAutoGenInner::NotInitialized => {
+                let msg = format!(
+                    "Somehow there is a tool call, which asks for a func '{}'. AutoGen is in not initialized state",
+                    func_name
+                );
+                println!("{}", msg);
+                panic!("{}", msg);
+            }
+            MyAutoGenInner::LocalToolFunctions(local_tool_functions) => {
+                local_tool_functions.get_func(func_name)
+            }
+            MyAutoGenInner::RemoteToolFunctions(remote_tool_functions) => {
+                Some(remote_tool_functions.clone())
             }
         }
-        None
     }
 }

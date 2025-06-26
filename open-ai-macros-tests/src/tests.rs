@@ -107,6 +107,8 @@ mod tests {
             parameters: MyRequestModel::get_description(),
         };
 
+        let func_json_description = serde_json::to_value(&func_json_description).unwrap();
+
         builder.add_tools_call_description(func_json_description);
 
         let json_str = serde_json::to_string_pretty(builder.get_model()).unwrap();

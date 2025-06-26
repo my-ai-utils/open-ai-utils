@@ -7,8 +7,8 @@ use serde::de::DeserializeOwned;
 use crate::{
     FunctionDescriptionJsonModel, FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
-        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, TechRequestLogger, ToolFunction,
-        ToolFunctionHolder,
+        AutoGenSettings, LocalToolFunctions, MyAutoGenInner, OpenAiRespModel, RemoteToolFunctions,
+        RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction, ToolFunctionHolder,
     },
 };
 
@@ -22,6 +22,26 @@ impl MyAutoGen {
             inner: MyAutoGenInner::new(),
         }
     }
+
+    pub fn register_remote_tool_functions(
+        &mut self,
+        remote_tool_function: Arc<dyn RemoteToolFunctions + Send + Sync + 'static>,
+    ) {
+        match &mut self.inner {
+            MyAutoGenInner::NotInitialized => {
+                self.inner = MyAutoGenInner::RemoteToolFunctions(
+                    RemoteToolFunctionsHandler {
+                        data_src: remote_tool_function,
+                    }
+                    .into(),
+                );
+            }
+            _ => {
+                panic!("Local or remote tool_function is already registered");
+            }
+        }
+    }
+
     pub fn register_function<
         ParamType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static,
         TToolFunction: ToolFunction<ParamType> + Send + Sync + 'static,
@@ -31,6 +51,18 @@ impl MyAutoGen {
         func_description: &'static str,
         tool_function: Arc<TToolFunction>,
     ) {
+        let local_tool_functions = match &mut self.inner {
+            MyAutoGenInner::NotInitialized => {
+                let local_tool_functions = LocalToolFunctions::new();
+                self.inner = MyAutoGenInner::LocalToolFunctions(local_tool_functions);
+                self.inner.unwrap_as_local_functions_mut()
+            }
+            MyAutoGenInner::LocalToolFunctions(data) => data,
+            MyAutoGenInner::RemoteToolFunctions(_) => {
+                panic!("Remote tool functions is already registered");
+            }
+        };
+
         let func_json_description = FunctionDescriptionJsonModel {
             name: func_name.to_string(),
             description: func_description.to_string(),
@@ -41,13 +73,31 @@ impl MyAutoGen {
 
         let holder = Arc::new(holder);
 
-        self.inner
-            .register(func_name, func_json_description, holder);
+        local_tool_functions.register(
+            func_name,
+            serde_json::to_value(func_json_description).unwrap(),
+            holder,
+        );
     }
 
-    fn populate_request_builder(&self, rb: &mut OpenAiRequestBodyBuilder) {
-        for func in self.inner.get_func_descriptions() {
-            rb.add_tools_call_description(func.clone());
+    async fn populate_request_builder(&self, rb: &mut OpenAiRequestBodyBuilder) {
+        match &self.inner {
+            MyAutoGenInner::NotInitialized => {}
+            MyAutoGenInner::LocalToolFunctions(local_tool_functions) => {
+                let tools = local_tool_functions.get_tools_description();
+                rb.add_tools(tools);
+            }
+            MyAutoGenInner::RemoteToolFunctions(handler) => {
+                let description = handler.data_src.get_tools_description().await;
+                let tools = serde_json::to_value(&description);
+
+                if let Err(err) = &tools {
+                    println!("Can not parse tools description. Err:{}", err);
+                    println!("{}", &description);
+                    panic!("{}", err);
+                }
+                rb.add_tools(tools.unwrap());
+            }
         }
     }
 
@@ -57,14 +107,14 @@ impl MyAutoGen {
         rb: &mut OpenAiRequestBodyBuilder,
         tech_logs: &mut TechRequestLogger,
     ) -> Result<(), String> {
-        self.populate_request_builder(rb);
+        self.populate_request_builder(rb).await;
 
         loop {
             let req_ts = DateTimeAsMicroseconds::now();
             let req_txt = serde_json::to_string(rb.get_model()).unwrap();
 
             let (model, response_body) = self
-                .execute_request(settings, &rb)
+                .execute_request(settings, rb)
                 .await
                 .map_err(|itm| itm.to_string())?;
 
@@ -100,7 +150,9 @@ impl MyAutoGen {
                             ));
                         };
 
-                        let result = func.call(&tool_call_model.function.arguments).await;
+                        let result = func
+                            .call(func_name, &tool_call_model.function.arguments)
+                            .await;
 
                         rb.add_tool_call_response(tool_call_model, result);
                     }
@@ -112,7 +164,7 @@ impl MyAutoGen {
     async fn execute_request(
         &self,
         settings: &AutoGenSettings,
-        rb: &OpenAiRequestBodyBuilder,
+        rb: &mut OpenAiRequestBodyBuilder,
     ) -> Result<(OpenAiRespModel, String), String> {
         let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
 
@@ -161,7 +213,7 @@ impl MyAutoGen {
     pub async fn execute_request_as_stream(
         &self,
         settings: &AutoGenSettings,
-        rb: &OpenAiRequestBodyBuilder,
+        rb: &mut OpenAiRequestBodyBuilder,
     ) -> Result<FlResponseAsStream, String> {
         let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
 

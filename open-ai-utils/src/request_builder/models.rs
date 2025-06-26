@@ -3,7 +3,8 @@ use serde::*;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiRequestModel {
     pub messages: Vec<OpenAiMessageModel>,
-    pub tools: Vec<ToolsDescriptionJsonModel>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tools: Option<serde_json::Value>,
     pub model: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f64>,
@@ -51,5 +52,5 @@ pub struct FunctionDescriptionJsonModel {
 pub struct ToolsDescriptionJsonModel {
     #[serde(rename = "type")]
     pub tp: String,
-    pub function: Option<FunctionDescriptionJsonModel>,
+    pub function: Option<serde_json::Value>,
 }

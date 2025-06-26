@@ -11,7 +11,7 @@ pub trait ToolFunction<ParamsType: FunctionToolCallDescription> {
 
 #[async_trait::async_trait]
 pub trait ToolFunctionAbstract {
-    async fn call(&self, params: &str) -> String;
+    async fn call(&self, func: &str, params: &str) -> String;
 }
 
 pub struct ToolFunctionHolder<ParamsType: FunctionToolCallDescription> {
@@ -35,7 +35,7 @@ impl<ParamsType: FunctionToolCallDescription> ToolFunctionHolder<ParamsType> {
 impl<ParamsType: FunctionToolCallDescription + DeserializeOwned> ToolFunctionAbstract
     for ToolFunctionHolder<ParamsType>
 {
-    async fn call(&self, params: &str) -> String {
+    async fn call(&self, _func: &str, params: &str) -> String {
         let data: ParamsType = serde_json::from_str(params).unwrap();
         self.inner.callback(data).await
     }

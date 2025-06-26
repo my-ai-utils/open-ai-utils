@@ -5,6 +5,7 @@ use crate::my_auto_gen::ToolCallModel;
 use super::*;
 
 pub struct OpenAiRequestBodyBuilder {
+    tools: Vec<ToolsDescriptionJsonModel>,
     model: OpenAiRequestModel,
 }
 
@@ -12,9 +13,10 @@ impl OpenAiRequestBodyBuilder {
     pub fn new(system_prompt: impl Into<StrOrString<'static>>, model: LlmModel) -> Self {
         let system_prompt: StrOrString<'static> = system_prompt.into();
         Self {
+            tools: vec![],
             model: OpenAiRequestModel {
                 model: model.to_string(),
-                tools: vec![],
+                tools: serde_json::from_str("[]").unwrap(),
                 messages: vec![OpenAiMessageModel {
                     role: "system".to_owned(),
                     content: Some(system_prompt.to_string()),
@@ -116,24 +118,35 @@ impl OpenAiRequestBodyBuilder {
         Self {
             model: OpenAiRequestModel {
                 model: model.to_string(),
-                tools: vec![],
+                tools: serde_json::from_str("[]").unwrap(),
                 messages,
                 max_tokens: None,
                 temperature: None,
                 top_p: None,
                 stream: None,
             },
+            tools: vec![],
         }
     }
 
-    pub fn add_tools_call_description(&mut self, func_description: FunctionDescriptionJsonModel) {
-        self.model.tools.push(ToolsDescriptionJsonModel {
+    pub fn add_tools_call_description(&mut self, func_description: serde_json::Value) {
+        self.tools.push(ToolsDescriptionJsonModel {
             tp: "function".to_string(),
             function: Some(func_description),
         });
+        self.model.tools = None;
     }
 
-    pub fn get_model(&self) -> &OpenAiRequestModel {
+    pub fn add_tools(&mut self, tools: serde_json::Value) {
+        self.model.tools = Some(tools);
+    }
+
+    pub fn get_model(&mut self) -> &OpenAiRequestModel {
+        if self.tools.len() > 0 {
+            if self.model.tools.is_none() {
+                self.model.tools = Some(serde_json::to_value(&self.tools).unwrap());
+            }
+        }
         &self.model
     }
 
