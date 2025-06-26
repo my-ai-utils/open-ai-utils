@@ -1,6 +1,11 @@
 use std::sync::Arc;
 
-use crate::{ToolsDescriptionJsonModel, my_auto_gen::ToolFunctionAbstract};
+use serde::de::DeserializeOwned;
+
+use crate::{
+    FunctionDescriptionJsonModel, FunctionToolCallDescription, ToolsDescriptionJsonModel,
+    my_auto_gen::{ToolFunction, ToolFunctionAbstract, ToolFunctionHolder},
+};
 
 pub struct ToolFunctions {
     tool_functions: Vec<(
@@ -17,7 +22,34 @@ impl ToolFunctions {
             func_json_descriptions: Default::default(),
         }
     }
-    pub fn register(
+
+    pub fn register_function<
+        ParamType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static,
+        TToolFunction: ToolFunction<ParamType> + Send + Sync + 'static,
+    >(
+        &mut self,
+        func_name: &'static str,
+        func_description: &'static str,
+        tool_function: Arc<TToolFunction>,
+    ) {
+        let func_json_description = FunctionDescriptionJsonModel {
+            name: func_name.to_string(),
+            description: func_description.to_string(),
+            parameters: ParamType::get_description(),
+        };
+
+        let holder = ToolFunctionHolder::new(func_name, tool_function);
+
+        let holder = Arc::new(holder);
+
+        self.register(
+            func_name,
+            serde_json::to_value(func_json_description).unwrap(),
+            holder,
+        );
+    }
+
+    fn register(
         &mut self,
         func_name: &'static str,
         description: serde_json::Value,

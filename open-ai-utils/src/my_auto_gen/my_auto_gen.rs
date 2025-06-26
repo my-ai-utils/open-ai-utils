@@ -5,11 +5,10 @@ use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
 
 use crate::{
-    FunctionDescriptionJsonModel, FunctionToolCallDescription, OpenAiRequestBodyBuilder,
+    FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
         AutoGenSettings, MyAutoGenInner, OpenAiRespModel, RemoteToolFunctions,
-        RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction, ToolFunctionHolder,
-        ToolFunctions,
+        RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction, ToolFunctions,
     },
 };
 
@@ -52,7 +51,7 @@ impl MyAutoGen {
         func_description: &'static str,
         tool_function: Arc<TToolFunction>,
     ) {
-        let local_tool_functions = match &mut self.inner {
+        let tool_functions = match &mut self.inner {
             MyAutoGenInner::NotInitialized => {
                 let local_tool_functions = ToolFunctions::new();
                 self.inner = MyAutoGenInner::LocalToolFunctions(local_tool_functions);
@@ -64,21 +63,7 @@ impl MyAutoGen {
             }
         };
 
-        let func_json_description = FunctionDescriptionJsonModel {
-            name: func_name.to_string(),
-            description: func_description.to_string(),
-            parameters: ParamType::get_description(),
-        };
-
-        let holder = ToolFunctionHolder::new(func_name, tool_function);
-
-        let holder = Arc::new(holder);
-
-        local_tool_functions.register(
-            func_name,
-            serde_json::to_value(func_json_description).unwrap(),
-            holder,
-        );
+        tool_functions.register_function(func_name, func_description, tool_function);
     }
 
     async fn populate_request_builder(&self, rb: &mut OpenAiRequestBodyBuilder) {
