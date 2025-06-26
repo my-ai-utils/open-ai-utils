@@ -7,8 +7,9 @@ use serde::de::DeserializeOwned;
 use crate::{
     FunctionDescriptionJsonModel, FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
-        AutoGenSettings, LocalToolFunctions, MyAutoGenInner, OpenAiRespModel, RemoteToolFunctions,
+        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, RemoteToolFunctions,
         RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction, ToolFunctionHolder,
+        ToolFunctions,
     },
 };
 
@@ -53,7 +54,7 @@ impl MyAutoGen {
     ) {
         let local_tool_functions = match &mut self.inner {
             MyAutoGenInner::NotInitialized => {
-                let local_tool_functions = LocalToolFunctions::new();
+                let local_tool_functions = ToolFunctions::new();
                 self.inner = MyAutoGenInner::LocalToolFunctions(local_tool_functions);
                 self.inner.unwrap_as_local_functions_mut()
             }

@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
-use crate::my_auto_gen::{LocalToolFunctions, RemoteToolFunctionsHandler, ToolFunctionAbstract};
+use crate::my_auto_gen::{RemoteToolFunctionsHandler, ToolFunctionAbstract, ToolFunctions};
 
 pub enum MyAutoGenInner {
     NotInitialized,
-    LocalToolFunctions(LocalToolFunctions),
+    LocalToolFunctions(ToolFunctions),
     RemoteToolFunctions(Arc<RemoteToolFunctionsHandler>),
 }
 
@@ -13,7 +13,7 @@ impl MyAutoGenInner {
         Self::NotInitialized
     }
 
-    pub fn unwrap_as_local_functions_mut(&mut self) -> &mut LocalToolFunctions {
+    pub fn unwrap_as_local_functions_mut(&mut self) -> &mut ToolFunctions {
         match self {
             MyAutoGenInner::NotInitialized => {
                 panic!("Not Initialized");

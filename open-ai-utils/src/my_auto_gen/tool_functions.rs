@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{ToolsDescriptionJsonModel, my_auto_gen::ToolFunctionAbstract};
 
-pub struct LocalToolFunctions {
+pub struct ToolFunctions {
     tool_functions: Vec<(
         &'static str,
         Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>,
@@ -10,7 +10,7 @@ pub struct LocalToolFunctions {
     func_json_descriptions: Vec<serde_json::Value>,
 }
 
-impl LocalToolFunctions {
+impl ToolFunctions {
     pub fn new() -> Self {
         Self {
             tool_functions: Default::default(),
