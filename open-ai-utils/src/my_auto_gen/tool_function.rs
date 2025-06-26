@@ -6,12 +6,12 @@ use crate::FunctionToolCallDescription;
 
 #[async_trait::async_trait]
 pub trait ToolFunction<ParamsType: FunctionToolCallDescription> {
-    async fn callback(&self, params: ParamsType) -> String;
+    async fn callback(&self, params: ParamsType) -> Result<String, String>;
 }
 
 #[async_trait::async_trait]
 pub trait ToolFunctionAbstract {
-    async fn call(&self, func: &str, params: &str) -> String;
+    async fn call(&self, func: &str, params: &str) -> Result<String, String>;
 }
 
 pub struct ToolFunctionHolder<ParamsType: FunctionToolCallDescription> {
@@ -32,11 +32,17 @@ impl<ParamsType: FunctionToolCallDescription> ToolFunctionHolder<ParamsType> {
 }
 
 #[async_trait::async_trait]
-impl<ParamsType: FunctionToolCallDescription + DeserializeOwned> ToolFunctionAbstract
-    for ToolFunctionHolder<ParamsType>
+impl<ParamsType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static>
+    ToolFunctionAbstract for ToolFunctionHolder<ParamsType>
 {
-    async fn call(&self, _func: &str, params: &str) -> String {
-        let data: ParamsType = serde_json::from_str(params).unwrap();
-        self.inner.callback(data).await
+    async fn call(&self, fn_name: &str, params: &str) -> Result<String, String> {
+        let data: Result<ParamsType, _> = serde_json::from_str(params);
+        match data {
+            Ok(data) => self.inner.callback(data).await,
+            Err(err) => Err(format!(
+                "Can not deserialize parameters for fn {}. Err: {}",
+                fn_name, err
+            )),
+        }
     }
 }

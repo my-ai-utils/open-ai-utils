@@ -84,4 +84,17 @@ impl ToolFunctions {
         }
         None
     }
+
+    pub async fn invoke_function(&self, func_name: &str, params: &str) -> Result<String, String> {
+        let func = self.get_func(func_name);
+
+        let Some(func) = func else {
+            return Err(format!(
+                "Function call with name {} is not found",
+                func_name
+            ));
+        };
+
+        func.call(func_name, params).await
+    }
 }

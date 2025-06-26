@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::my_auto_gen::{RemoteToolFunctionsHandler, ToolFunctionAbstract, ToolFunctions};
+use crate::my_auto_gen::{RemoteToolFunctionsHandler, ToolFunctions};
 
 pub enum MyAutoGenInner {
     NotInitialized,
@@ -25,7 +25,8 @@ impl MyAutoGenInner {
         }
     }
 
-    pub fn get_func(
+    /*
+    fn get_func(
         &self,
         func_name: &str,
     ) -> Option<Arc<dyn ToolFunctionAbstract + Send + Sync + 'static>> {
@@ -43,6 +44,26 @@ impl MyAutoGenInner {
             }
             MyAutoGenInner::RemoteToolFunctions(remote_tool_functions) => {
                 Some(remote_tool_functions.clone())
+            }
+        }
+    }
+    */
+
+    pub async fn invoke_func(&self, fn_name: &str, params: &str) -> Result<String, String> {
+        match self {
+            MyAutoGenInner::NotInitialized => {
+                panic!(
+                    "AutoGen does is in NotInitialized mode. fn_name:{}",
+                    fn_name
+                );
+            }
+            MyAutoGenInner::LocalToolFunctions(tool_functions) => {
+                tool_functions.invoke_function(fn_name, params).await
+            }
+            MyAutoGenInner::RemoteToolFunctions(remote_tool_functions_handler) => {
+                remote_tool_functions_handler
+                    .invoke_function(fn_name, params)
+                    .await
             }
         }
     }

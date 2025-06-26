@@ -127,18 +127,11 @@ impl MyAutoGen {
                     rb.add_assistant_response_as_tool_calls(tool_call_models);
                     for tool_call_model in tool_call_models {
                         let func_name = tool_call_model.function.name.as_str();
-                        let func = self.inner.get_func(func_name);
 
-                        let Some(func) = func else {
-                            return Err(format!(
-                                "Function call with name {} is not found",
-                                func_name
-                            ));
-                        };
-
-                        let result = func
-                            .call(func_name, &tool_call_model.function.arguments)
-                            .await;
+                        let result = self
+                            .inner
+                            .invoke_func(func_name, &tool_call_model.function.arguments)
+                            .await?;
 
                         rb.add_tool_call_response(tool_call_model, result);
                     }
