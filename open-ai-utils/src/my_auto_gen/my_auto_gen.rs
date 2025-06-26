@@ -3,6 +3,7 @@ use std::{sync::Arc, time::Duration};
 use flurl::{FlResponseAsStream, FlUrl};
 use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
+use tokio::sync::RwLock;
 
 use crate::{
     FunctionToolCallDescription, OpenAiRequestBodyBuilder,
@@ -13,23 +14,24 @@ use crate::{
 };
 
 pub struct MyAutoGen {
-    inner: MyAutoGenInner,
+    inner: RwLock<MyAutoGenInner>,
 }
 
 impl MyAutoGen {
     pub fn new() -> Self {
         Self {
-            inner: MyAutoGenInner::new(),
+            inner: RwLock::new(MyAutoGenInner::new()),
         }
     }
 
-    pub fn register_remote_tool_functions(
-        &mut self,
+    pub async fn register_remote_tool_functions(
+        &self,
         remote_tool_function: Arc<dyn RemoteToolFunctions + Send + Sync + 'static>,
     ) {
-        match &mut self.inner {
+        let mut inner = self.inner.write().await;
+        match &mut *inner {
             MyAutoGenInner::NotInitialized => {
-                self.inner = MyAutoGenInner::RemoteToolFunctions(
+                *inner = MyAutoGenInner::RemoteToolFunctions(
                     RemoteToolFunctionsHandler {
                         data_src: remote_tool_function,
                     }
@@ -42,20 +44,21 @@ impl MyAutoGen {
         }
     }
 
-    pub fn register_function<
+    pub async fn register_function<
         ParamType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static,
         TToolFunction: ToolFunction<ParamType> + Send + Sync + 'static,
     >(
-        &mut self,
+        &self,
         func_name: &'static str,
         func_description: &'static str,
         tool_function: Arc<TToolFunction>,
     ) {
-        let tool_functions = match &mut self.inner {
+        let mut inner = self.inner.write().await;
+        let tool_functions = match &mut *inner {
             MyAutoGenInner::NotInitialized => {
                 let local_tool_functions = ToolFunctions::new();
-                self.inner = MyAutoGenInner::LocalToolFunctions(local_tool_functions);
-                self.inner.unwrap_as_local_functions_mut()
+                *inner = MyAutoGenInner::LocalToolFunctions(local_tool_functions);
+                inner.unwrap_as_local_functions_mut()
             }
             MyAutoGenInner::LocalToolFunctions(data) => data,
             MyAutoGenInner::RemoteToolFunctions(_) => {
@@ -66,41 +69,22 @@ impl MyAutoGen {
         tool_functions.register_function(func_name, func_description, tool_function);
     }
 
-    async fn populate_request_builder(&self, rb: &mut OpenAiRequestBodyBuilder) {
-        match &self.inner {
-            MyAutoGenInner::NotInitialized => {}
-            MyAutoGenInner::LocalToolFunctions(local_tool_functions) => {
-                let tools = local_tool_functions.get_tools_description();
-                rb.add_tools(tools);
-            }
-            MyAutoGenInner::RemoteToolFunctions(handler) => {
-                let description = handler.data_src.get_tools_description().await;
-                let tools = serde_json::to_value(&description);
-
-                if let Err(err) = &tools {
-                    println!("Can not parse tools description. Err:{}", err);
-                    println!("{}", &description);
-                    panic!("{}", err);
-                }
-                rb.add_tools(tools.unwrap());
-            }
-        }
-    }
-
     pub async fn execute(
         &self,
         settings: &AutoGenSettings,
         rb: &mut OpenAiRequestBodyBuilder,
         tech_logs: &mut TechRequestLogger,
     ) -> Result<(), String> {
-        self.populate_request_builder(rb).await;
+        {
+            let inner = self.inner.read().await;
+            inner.populate_request_builder(rb).await;
+        }
 
         loop {
             let req_ts = DateTimeAsMicroseconds::now();
             let req_txt = serde_json::to_string(rb.get_model()).unwrap();
 
-            let (model, response_body) = self
-                .execute_request(settings, rb)
+            let (model, response_body) = execute_request(settings, rb)
                 .await
                 .map_err(|itm| itm.to_string())?;
 
@@ -128,63 +112,17 @@ impl MyAutoGen {
                     for tool_call_model in tool_call_models {
                         let func_name = tool_call_model.function.name.as_str();
 
-                        let result = self
-                            .inner
-                            .invoke_func(func_name, &tool_call_model.function.arguments)
-                            .await?;
+                        let result = {
+                            let inner = self.inner.read().await;
+                            let result = inner
+                                .invoke_func(func_name, &tool_call_model.function.arguments)
+                                .await?;
+                            result
+                        };
 
                         rb.add_tool_call_response(tool_call_model, result);
                     }
                 }
-            }
-        }
-    }
-
-    async fn execute_request(
-        &self,
-        settings: &AutoGenSettings,
-        rb: &mut OpenAiRequestBodyBuilder,
-    ) -> Result<(OpenAiRespModel, String), String> {
-        let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
-
-        if let Some(api_key) = settings.api_key.as_ref() {
-            fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
-        };
-
-        if settings.do_not_reuse_connection.unwrap_or(false) {
-            fl_url = fl_url.do_not_reuse_connection();
-        }
-
-        let response = fl_url
-            .post_json(rb.get_model())
-            .await
-            .map_err(|itm| itm.to_string())?;
-
-        let status_code = response.get_status_code();
-
-        if status_code != 200 {
-            return Err(format!("Status code: {}", status_code));
-        }
-
-        let body = response
-            .receive_body()
-            .await
-            .map_err(|itm| itm.to_string())?;
-
-        let model: Result<OpenAiRespModel, _> = serde_json::from_slice(body.as_slice());
-
-        match model {
-            Ok(model) => {
-                let body = match std::str::from_utf8(body.as_slice()) {
-                    Ok(body_as_str) => body_as_str.to_string(),
-                    Err(_) => body.as_slice().into_base64(),
-                };
-
-                return Ok((model, body));
-            }
-            Err(err) => {
-                println!("Can not deserialize JsonModel. Err: `{}`", err);
-                panic!("Can not deserialize JsonModel. Err: `{}`", err);
             }
         }
     }
@@ -210,5 +148,53 @@ impl MyAutoGen {
             .map_err(|itm| itm.to_string())?;
 
         Ok(response.get_body_as_stream())
+    }
+}
+
+async fn execute_request(
+    settings: &AutoGenSettings,
+    rb: &mut OpenAiRequestBodyBuilder,
+) -> Result<(OpenAiRespModel, String), String> {
+    let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
+
+    if let Some(api_key) = settings.api_key.as_ref() {
+        fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
+    };
+
+    if settings.do_not_reuse_connection.unwrap_or(false) {
+        fl_url = fl_url.do_not_reuse_connection();
+    }
+
+    let response = fl_url
+        .post_json(rb.get_model())
+        .await
+        .map_err(|itm| itm.to_string())?;
+
+    let status_code = response.get_status_code();
+
+    if status_code != 200 {
+        return Err(format!("Status code: {}", status_code));
+    }
+
+    let body = response
+        .receive_body()
+        .await
+        .map_err(|itm| itm.to_string())?;
+
+    let model: Result<OpenAiRespModel, _> = serde_json::from_slice(body.as_slice());
+
+    match model {
+        Ok(model) => {
+            let body = match std::str::from_utf8(body.as_slice()) {
+                Ok(body_as_str) => body_as_str.to_string(),
+                Err(_) => body.as_slice().into_base64(),
+            };
+
+            return Ok((model, body));
+        }
+        Err(err) => {
+            println!("Can not deserialize JsonModel. Err: `{}`", err);
+            panic!("Can not deserialize JsonModel. Err: `{}`", err);
+        }
     }
 }

@@ -1,6 +1,9 @@
 use std::sync::Arc;
 
-use crate::my_auto_gen::{RemoteToolFunctionsHandler, ToolFunctions};
+use crate::{
+    OpenAiRequestBodyBuilder,
+    my_auto_gen::{RemoteToolFunctionsHandler, ToolFunctions},
+};
 
 pub enum MyAutoGenInner {
     NotInitialized,
@@ -21,6 +24,27 @@ impl MyAutoGenInner {
             MyAutoGenInner::LocalToolFunctions(local_tool_functions) => local_tool_functions,
             MyAutoGenInner::RemoteToolFunctions(_) => {
                 panic!("Remote Tool Functions");
+            }
+        }
+    }
+
+    pub async fn populate_request_builder(&self, rb: &mut OpenAiRequestBodyBuilder) {
+        match &self {
+            MyAutoGenInner::NotInitialized => {}
+            MyAutoGenInner::LocalToolFunctions(local_tool_functions) => {
+                let tools = local_tool_functions.get_tools_description();
+                rb.add_tools(tools);
+            }
+            MyAutoGenInner::RemoteToolFunctions(handler) => {
+                let description = handler.data_src.get_tools_description().await;
+                let tools = serde_json::to_value(&description);
+
+                if let Err(err) = &tools {
+                    println!("Can not parse tools description. Err:{}", err);
+                    println!("{}", &description);
+                    panic!("{}", err);
+                }
+                rb.add_tools(tools.unwrap());
             }
         }
     }
