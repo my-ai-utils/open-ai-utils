@@ -179,10 +179,6 @@ async fn execute_request(
         fl_url = fl_url.do_not_reuse_connection();
     }
 
-    let model = rb.get_model();
-
-    println!("{}", serde_json::to_string(model).unwrap());
-
     let response = fl_url
         .post_json(rb.get_model())
         .await
