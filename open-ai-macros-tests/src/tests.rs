@@ -96,8 +96,8 @@ mod tests {
     }
     #[test]
     fn test_builder_and_model() {
-        let mut builder = OpenAiRequestBodyBuilder::new(
-            Some("test_system_prompt_data"),
+        let mut builder = OpenAiRequestBodyBuilder::new_with_system_prompt(
+            "test_system_prompt_data",
             open_ai_utils::LlmModel::Gpt4o,
         );
 

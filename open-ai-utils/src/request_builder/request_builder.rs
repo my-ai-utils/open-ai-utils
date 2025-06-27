@@ -10,18 +10,32 @@ pub struct OpenAiRequestBodyBuilder {
 }
 
 impl OpenAiRequestBodyBuilder {
-    pub fn new(system_prompt: Option<impl Into<StrOrString<'static>>>, model: LlmModel) -> Self {
-        let messages = if let Some(system_prompt) = system_prompt {
-            let system_prompt: StrOrString<'static> = system_prompt.into();
-            vec![OpenAiMessageModel {
-                role: "system".to_owned(),
-                content: Some(system_prompt.to_string()),
-                tool_calls: None,
-                tool_call_id: None,
-            }]
-        } else {
-            vec![]
-        };
+    pub fn new(model: LlmModel) -> Self {
+        Self {
+            tools: vec![],
+            model: OpenAiRequestModel {
+                model: model.to_string(),
+                tools: serde_json::from_str("[]").unwrap(),
+                messages: vec![],
+                max_tokens: None,
+                temperature: None,
+                top_p: None,
+                stream: None,
+            },
+        }
+    }
+
+    pub fn new_with_system_prompt(
+        system_prompt: impl Into<StrOrString<'static>>,
+        model: LlmModel,
+    ) -> Self {
+        let system_prompt: StrOrString<'static> = system_prompt.into();
+        let messages = vec![OpenAiMessageModel {
+            role: "system".to_owned(),
+            content: Some(system_prompt.to_string()),
+            tool_calls: None,
+            tool_call_id: None,
+        }];
 
         Self {
             tools: vec![],
