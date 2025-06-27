@@ -1,5 +1,6 @@
 use rust_extensions::date_time::DateTimeAsMicroseconds;
 
+#[derive(Debug)]
 pub struct TechRequestLogItem {
     pub req_ts: DateTimeAsMicroseconds,
     pub request: String,
