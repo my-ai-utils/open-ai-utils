@@ -173,6 +173,8 @@ async fn execute_request(
     let status_code = response.get_status_code();
 
     if status_code != 200 {
+        let body = response.receive_body().await;
+        println!("{:?}", body);
         return Err(format!("Status code: {}", status_code));
     }
 
