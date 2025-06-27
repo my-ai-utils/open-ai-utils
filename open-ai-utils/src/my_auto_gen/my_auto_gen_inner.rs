@@ -37,7 +37,7 @@ impl MyAutoGenInner {
             }
             MyAutoGenInner::RemoteToolFunctions(handler) => {
                 let description = handler.data_src.get_tools_description().await;
-                let tools = serde_json::to_value(&description);
+                let tools: Result<serde_json::Value, _> = serde_json::from_str(&description);
 
                 if let Err(err) = &tools {
                     println!("Can not parse tools description. Err:{}", err);
