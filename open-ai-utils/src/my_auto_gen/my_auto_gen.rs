@@ -173,8 +173,9 @@ async fn execute_request(
     let status_code = response.get_status_code();
 
     if status_code != 200 {
-        let body = response.receive_body().await;
-        println!("{:?}", body);
+        let body = response.receive_body().await.unwrap();
+        println!("OpenAI status code: {}", status_code);
+        println!("{:?}", std::str::from_utf8(body.as_slice()));
         return Err(format!("Status code: {}", status_code));
     }
 
