@@ -84,9 +84,23 @@ impl MyAutoGen {
             let req_ts = DateTimeAsMicroseconds::now();
             let req_txt = serde_json::to_string(rb.get_model()).unwrap();
 
-            let (model, response_body) = execute_request(settings, rb)
+            let request = execute_request(settings, rb)
                 .await
-                .map_err(|itm| itm.to_string())?;
+                .map_err(|itm| itm.to_string());
+
+            let (model, response_body) = match request {
+                Ok(resp) => resp,
+                Err(err) => {
+                    tech_logs.add(super::TechRequestLogItem {
+                        req_ts: req_ts,
+                        request: req_txt,
+                        resp_ts: DateTimeAsMicroseconds::now(),
+                        response: err.to_string(),
+                    });
+
+                    return Err(err);
+                }
+            };
 
             tech_logs.add(super::TechRequestLogItem {
                 req_ts: req_ts,
