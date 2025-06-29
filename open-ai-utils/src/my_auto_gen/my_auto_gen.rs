@@ -122,7 +122,7 @@ impl MyAutoGen {
                     return Ok(());
                 }
                 super::OpenAiResponse::ToolCall(tool_call_models) => {
-                    //rb.add_assistant_response_as_tool_calls(tool_call_models);
+                    rb.add_assistant_response_as_tool_calls(tool_call_models);
                     for tool_call_model in tool_call_models {
                         let func_name = tool_call_model.function.name.as_str();
 

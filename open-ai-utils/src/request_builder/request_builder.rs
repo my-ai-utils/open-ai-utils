@@ -86,7 +86,6 @@ impl OpenAiRequestBodyBuilder {
         });
     }
 
-    /*
     pub fn add_assistant_response_as_tool_calls(
         &mut self,
         tool_calls_ai_response: &[ToolCallModel],
@@ -108,7 +107,7 @@ impl OpenAiRequestBodyBuilder {
             tool_call_id: None,
         });
     }
-     */
+
     pub fn add_tool_call_response(&mut self, src: &ToolCallModel, result: String) {
         self.model.messages.push(OpenAiMessageModel {
             role: "tool".to_owned(),
