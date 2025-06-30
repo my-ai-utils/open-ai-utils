@@ -74,11 +74,13 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: &mut OpenAiRequestBodyBuilder,
         tech_logs: &mut TechRequestLogger,
-    ) -> Result<(), String> {
+    ) -> Result<Vec<ToolCallsResult>, String> {
         {
             let inner = self.inner.read().await;
             inner.populate_request_builder(rb).await;
         }
+
+        let mut tool_calls_result = Vec::new();
 
         loop {
             let req_ts = DateTimeAsMicroseconds::now();
@@ -119,14 +121,14 @@ impl MyAutoGen {
             match message_to_analyze {
                 super::OpenAiResponse::Message(message) => {
                     rb.add_assistant_message(message.to_string());
-                    return Ok(());
+                    return Ok(tool_calls_result);
                 }
                 super::OpenAiResponse::ToolCall(tool_call_models) => {
                     rb.add_assistant_response_as_tool_calls(tool_call_models);
                     for tool_call_model in tool_call_models {
                         let func_name = tool_call_model.function.name.as_str();
 
-                        let result = {
+                        let call_result = {
                             let inner = self.inner.read().await;
                             let result = inner
                                 .invoke_func(func_name, &tool_call_model.function.arguments)
@@ -134,7 +136,12 @@ impl MyAutoGen {
                             result
                         };
 
-                        rb.add_tool_call_response(tool_call_model, result);
+                        tool_calls_result.push(ToolCallsResult {
+                            fn_name: tool_call_model.function.name.to_string(),
+                            call_result: call_result.clone(),
+                        });
+
+                        rb.add_tool_call_response(tool_call_model, call_result);
                     }
                 }
             }
@@ -214,4 +221,9 @@ async fn execute_request(
             panic!("Can not deserialize JsonModel. Err: `{}`", err);
         }
     }
+}
+
+pub struct ToolCallsResult {
+    pub fn_name: String,
+    pub call_result: String,
 }
