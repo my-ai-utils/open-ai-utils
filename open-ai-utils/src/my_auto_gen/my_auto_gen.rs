@@ -223,6 +223,7 @@ async fn execute_request(
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ToolCallsResult {
     pub fn_name: String,
     pub call_result: String,
