@@ -8,6 +8,8 @@ const SYSTEM_ROLE: &'static str = "system";
 
 const ASSISTANT_ROLE: &'static str = "assistant";
 
+const TOOL_ROLE: &'static str = "tool";
+
 pub struct OpenAiRequestBodyBuilder {
     tools: Vec<ToolsDescriptionJsonModel>,
     model: OpenAiRequestModel,
@@ -114,7 +116,7 @@ impl OpenAiRequestBodyBuilder {
 
     pub fn add_tool_call_response(&mut self, src: &ToolCallModel, result: String) {
         self.model.messages.push(OpenAiMessageModel {
-            role: "tool".to_owned(),
+            role: TOOL_ROLE.to_owned(),
             content: Some(result),
             tool_calls: None,
             tool_call_id: Some(src.id.to_string()),
@@ -177,7 +179,17 @@ impl OpenAiRequestBodyBuilder {
     }
 
     pub fn remove_tool_calls(&mut self) {
-        self.model.messages.retain(|itm| itm.content.is_some());
+        self.model.messages.retain(|itm| {
+            if itm.role == ASSISTANT_ROLE && itm.tool_calls.is_some() {
+                return false;
+            }
+
+            if itm.role == TOOL_ROLE {
+                return false;
+            }
+
+            true
+        });
     }
 
     pub fn get_last_message(&self) -> &OpenAiMessageModel {
