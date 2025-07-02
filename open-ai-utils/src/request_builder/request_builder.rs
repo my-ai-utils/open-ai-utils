@@ -4,6 +4,10 @@ use crate::my_auto_gen::ToolCallModel;
 
 use super::*;
 
+const SYSTEM_ROLE: &'static str = "system";
+
+const ASSISTANT_ROLE: &'static str = "assistant";
+
 pub struct OpenAiRequestBodyBuilder {
     tools: Vec<ToolsDescriptionJsonModel>,
     model: OpenAiRequestModel,
@@ -31,7 +35,7 @@ impl OpenAiRequestBodyBuilder {
     ) -> Self {
         let system_prompt: StrOrString<'static> = system_prompt.into();
         let messages = vec![OpenAiMessageModel {
-            role: "system".to_owned(),
+            role: SYSTEM_ROLE.to_owned(),
             content: Some(system_prompt.to_string()),
             tool_calls: None,
             tool_call_id: None,
@@ -79,7 +83,7 @@ impl OpenAiRequestBodyBuilder {
 
     pub fn add_assistant_message(&mut self, message: String) {
         self.model.messages.push(OpenAiMessageModel {
-            role: "assistant".to_owned(),
+            role: ASSISTANT_ROLE.to_owned(),
             content: Some(message),
             tool_calls: None,
             tool_call_id: None,
@@ -101,7 +105,7 @@ impl OpenAiRequestBodyBuilder {
         }
 
         self.model.messages.push(OpenAiMessageModel {
-            role: "assistant".to_owned(),
+            role: ASSISTANT_ROLE.to_owned(),
             content: None,
             tool_calls: Some(tool_calls),
             tool_call_id: None,
@@ -128,7 +132,7 @@ impl OpenAiRequestBodyBuilder {
     ) -> Self {
         let system_prompt: StrOrString<'static> = system_prompt.into();
         let mut messages = vec![OpenAiMessageModel {
-            role: "system".to_owned(),
+            role: SYSTEM_ROLE.to_owned(),
             content: Some(system_prompt.to_string()),
             tool_calls: None,
             tool_call_id: None,
@@ -162,13 +166,17 @@ impl OpenAiRequestBodyBuilder {
         self.model.tools = Some(tools);
     }
 
-    pub fn get_model(&mut self) -> &OpenAiRequestModel {
+    pub fn get_model(&mut self) -> OpenAiRequestModel {
         if self.tools.len() > 0 {
             if self.model.tools.is_none() {
                 self.model.tools = Some(serde_json::to_value(&self.tools).unwrap());
             }
         }
-        &self.model
+        let mut result = self.model.clone();
+
+        result.messages.retain(|itm| itm.content.is_some());
+
+        result
     }
 
     pub fn get_last_message(&self) -> &OpenAiMessageModel {
