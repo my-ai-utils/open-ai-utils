@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TechRequestLogItem {
     pub req_ts: DateTimeAsMicroseconds,
-    pub request: String,
+    pub request: serde_json::Value,
     pub resp_ts: DateTimeAsMicroseconds,
-    pub response: String,
+    pub response: serde_json::Value,
 }
 
 pub struct TechRequestLogger {

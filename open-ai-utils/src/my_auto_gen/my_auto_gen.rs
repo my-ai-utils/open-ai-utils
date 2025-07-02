@@ -95,9 +95,9 @@ impl MyAutoGen {
                 Err(err) => {
                     tech_logs.add(super::TechRequestLogItem {
                         req_ts: req_ts,
-                        request: req_txt,
+                        request: format_response(req_txt.as_str()),
                         resp_ts: DateTimeAsMicroseconds::now(),
-                        response: err.to_string(),
+                        response: format_response(err.to_string().as_str()),
                     });
 
                     return Err(err);
@@ -106,9 +106,9 @@ impl MyAutoGen {
 
             tech_logs.add(super::TechRequestLogItem {
                 req_ts: req_ts,
-                request: req_txt,
+                request: format_response(req_txt.as_str()),
                 resp_ts: DateTimeAsMicroseconds::now(),
-                response: response_body.clone(),
+                response: format_response(response_body.as_str()),
             });
 
             let message_to_analyze = match model.peek_message() {
@@ -227,4 +227,13 @@ async fn execute_request(
 pub struct ToolCallsResult {
     pub fn_name: String,
     pub call_result: String,
+}
+
+fn format_response(src: &str) -> serde_json::Value {
+    let result: Result<serde_json::Value, _> = serde_json::from_str(src);
+
+    match result {
+        Ok(result) => result,
+        Err(_) => serde_json::Value::String(src.to_string()),
+    }
 }
