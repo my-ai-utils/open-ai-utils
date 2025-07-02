@@ -166,17 +166,14 @@ impl OpenAiRequestBodyBuilder {
         self.model.tools = Some(tools);
     }
 
-    pub fn get_model(&mut self) -> OpenAiRequestModel {
+    pub fn get_model(&mut self) -> &OpenAiRequestModel {
         if self.tools.len() > 0 {
             if self.model.tools.is_none() {
                 self.model.tools = Some(serde_json::to_value(&self.tools).unwrap());
             }
         }
-        let mut result = self.model.clone();
 
-        result.messages.retain(|itm| itm.content.is_some());
-
-        result
+        &self.model
     }
 
     pub fn get_last_message(&self) -> &OpenAiMessageModel {
