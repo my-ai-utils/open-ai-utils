@@ -176,6 +176,10 @@ impl OpenAiRequestBodyBuilder {
         &self.model
     }
 
+    pub fn remove_tool_calls(&mut self) {
+        self.model.messages.retain(|itm| itm.content.is_some());
+    }
+
     pub fn get_last_message(&self) -> &OpenAiMessageModel {
         self.model.messages.last().unwrap()
     }
