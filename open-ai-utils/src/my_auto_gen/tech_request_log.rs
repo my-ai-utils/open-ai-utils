@@ -1,6 +1,7 @@
 use rust_extensions::date_time::DateTimeAsMicroseconds;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TechRequestLogItem {
     pub req_ts: DateTimeAsMicroseconds,
     pub request: String,
