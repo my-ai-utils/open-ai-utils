@@ -121,8 +121,8 @@ impl OpenAiRequestBodyBuilder {
         });
     }
 
-    pub fn get_history(&self) -> &[OpenAiMessageModel] {
-        &self.model.messages
+    pub fn get_history_to_serialize(&self) -> &[OpenAiMessageModel] {
+        &self.model.messages[1..]
     }
 
     pub fn from_history(
