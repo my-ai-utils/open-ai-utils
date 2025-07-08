@@ -9,8 +9,15 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
 
     let mut fields_to_render = Vec::new();
 
+    let mut required_fields = Vec::new();
+
     for prop in fields {
+        if !prop.ty.is_option() {
+            required_fields.push(prop.name.to_string());
+        }
+
         let property = super::generate_property(prop)?;
+
         fields_to_render.push(property);
     }
 
@@ -31,7 +38,7 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
 
         params.insert("properties".into(), properties.into());
 
-        params.insert("required".into(), serde_json::Value::Array(vec![]));
+        params.insert("required".into(), serde_json::Value::Array(vec![#(#required_fields.into(),)*]));
         params.insert("additionalProperties".into(), false.into());
 
 
