@@ -6,12 +6,12 @@ use crate::FunctionToolCallDescription;
 
 #[async_trait::async_trait]
 pub trait ToolFunction<ParamsType: FunctionToolCallDescription> {
-    async fn callback(&self, params: ParamsType) -> Result<String, String>;
+    async fn callback(&self, params: ParamsType, ctx: &str) -> Result<String, String>;
 }
 
 #[async_trait::async_trait]
 pub trait ToolFunctionAbstract {
-    async fn call(&self, func: &str, params: &str) -> Result<String, String>;
+    async fn call(&self, func: &str, params: &str, ctx: &str) -> Result<String, String>;
 }
 
 pub struct ToolFunctionHolder<ParamsType: FunctionToolCallDescription> {
@@ -35,10 +35,10 @@ impl<ParamsType: FunctionToolCallDescription> ToolFunctionHolder<ParamsType> {
 impl<ParamsType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static>
     ToolFunctionAbstract for ToolFunctionHolder<ParamsType>
 {
-    async fn call(&self, fn_name: &str, params: &str) -> Result<String, String> {
+    async fn call(&self, fn_name: &str, params: &str, ctx: &str) -> Result<String, String> {
         let data: Result<ParamsType, _> = serde_json::from_str(params);
         match data {
-            Ok(data) => self.inner.callback(data).await,
+            Ok(data) => self.inner.callback(data, ctx).await,
             Err(err) => Err(format!(
                 "Can not deserialize parameters for fn {}. Err: {}",
                 fn_name, err

@@ -74,6 +74,7 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: &mut OpenAiRequestBodyBuilder,
         tech_logs: &mut TechRequestLogger,
+        ctx: &str,
     ) -> Result<Vec<ToolCallsResult>, String> {
         {
             let inner = self.inner.read().await;
@@ -131,7 +132,7 @@ impl MyAutoGen {
                         let call_result = {
                             let inner = self.inner.read().await;
                             let result = inner
-                                .invoke_func(func_name, &tool_call_model.function.arguments)
+                                .invoke_func(func_name, &tool_call_model.function.arguments, ctx)
                                 .await?;
                             result
                         };

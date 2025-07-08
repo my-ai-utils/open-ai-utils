@@ -85,7 +85,12 @@ impl ToolFunctions {
         None
     }
 
-    pub async fn invoke_function(&self, func_name: &str, params: &str) -> Result<String, String> {
+    pub async fn invoke_function(
+        &self,
+        func_name: &str,
+        params: &str,
+        ctx: &str,
+    ) -> Result<String, String> {
         let func = self.get_func(func_name);
 
         let Some(func) = func else {
@@ -95,6 +100,6 @@ impl ToolFunctions {
             ));
         };
 
-        func.call(func_name, params).await
+        func.call(func_name, params, ctx).await
     }
 }

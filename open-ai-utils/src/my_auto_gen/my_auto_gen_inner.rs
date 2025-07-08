@@ -73,7 +73,12 @@ impl MyAutoGenInner {
     }
     */
 
-    pub async fn invoke_func(&self, fn_name: &str, params: &str) -> Result<String, String> {
+    pub async fn invoke_func(
+        &self,
+        fn_name: &str,
+        params: &str,
+        ctx: &str,
+    ) -> Result<String, String> {
         match self {
             MyAutoGenInner::NotInitialized => {
                 panic!(
@@ -82,11 +87,11 @@ impl MyAutoGenInner {
                 );
             }
             MyAutoGenInner::LocalToolFunctions(tool_functions) => {
-                tool_functions.invoke_function(fn_name, params).await
+                tool_functions.invoke_function(fn_name, params, ctx).await
             }
             MyAutoGenInner::RemoteToolFunctions(remote_tool_functions_handler) => {
                 remote_tool_functions_handler
-                    .invoke_function(fn_name, params)
+                    .invoke_function(fn_name, params, ctx)
                     .await
             }
         }
