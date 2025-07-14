@@ -139,7 +139,8 @@ impl MyAutoGen {
 
                         tool_calls_result.push(ToolCallsResult {
                             fn_name: tool_call_model.function.name.to_string(),
-                            call_result: call_result.clone(),
+                            request_data: tool_call_model.function.arguments.to_string(),
+                            result_data: call_result.clone(),
                         });
 
                         rb.add_tool_call_response(tool_call_model, call_result);
@@ -227,7 +228,8 @@ async fn execute_request(
 #[derive(Debug, Clone)]
 pub struct ToolCallsResult {
     pub fn_name: String,
-    pub call_result: String,
+    pub request_data: String,
+    pub result_data: String,
 }
 
 fn format_response(src: &str) -> serde_json::Value {
