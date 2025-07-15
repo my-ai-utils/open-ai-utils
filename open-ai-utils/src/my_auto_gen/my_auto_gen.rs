@@ -9,8 +9,7 @@ use crate::{
     FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
         AutoGenSettings, MyAutoGenInner, OpenAiRespModel, OpenAiResponseStream,
-        RemoteToolFunctions, RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction,
-        ToolFunctions,
+        RemoteToolFunctions, RemoteToolFunctionsHandler, ToolFunction, ToolFunctions,
     },
 };
 
@@ -74,7 +73,6 @@ impl MyAutoGen {
         &self,
         settings: &AutoGenSettings,
         rb: &OpenAiRequestBodyBuilder,
-        tech_logs: &mut TechRequestLogger,
         ctx: &str,
     ) -> Result<Vec<ToolCallsResult>, String> {
         {
@@ -85,9 +83,14 @@ impl MyAutoGen {
         let mut tool_calls_result: Vec<ToolCallsResult> = Vec::new();
 
         loop {
-            let req_ts = DateTimeAsMicroseconds::now();
             let model = rb.get_model().await;
-            let req_txt = serde_json::to_string(&model).unwrap();
+
+            rb.write_tech_log(super::TechRequestLogItem {
+                timestamp: DateTimeAsMicroseconds::now(),
+                tp: super::TechLogItemType::Request,
+                data: serde_json::to_string(&model).unwrap(),
+            })
+            .await;
 
             let request = execute_request(settings, rb)
                 .await
@@ -96,23 +99,23 @@ impl MyAutoGen {
             let (model, response_body) = match request {
                 Ok(resp) => resp,
                 Err(err) => {
-                    tech_logs.add(super::TechRequestLogItem {
-                        req_ts: req_ts,
-                        request: format_response(req_txt.as_str()),
-                        resp_ts: DateTimeAsMicroseconds::now(),
-                        response: format_response(err.to_string().as_str()),
-                    });
+                    rb.write_tech_log(super::TechRequestLogItem {
+                        timestamp: DateTimeAsMicroseconds::now(),
+                        tp: super::TechLogItemType::Response,
+                        data: err.to_string(),
+                    })
+                    .await;
 
                     return Err(err);
                 }
             };
 
-            tech_logs.add(super::TechRequestLogItem {
-                req_ts: req_ts,
-                request: format_response(req_txt.as_str()),
-                resp_ts: DateTimeAsMicroseconds::now(),
-                response: format_response(response_body.as_str()),
-            });
+            rb.write_tech_log(super::TechRequestLogItem {
+                timestamp: DateTimeAsMicroseconds::now(),
+                tp: super::TechLogItemType::Response,
+                data: response_body.to_string(),
+            })
+            .await;
 
             let message_to_analyze = match model.peek_message() {
                 Some(message_to_analyze) => message_to_analyze,
@@ -140,7 +143,6 @@ impl MyAutoGen {
         &self,
         settings: &AutoGenSettings,
         rb: Arc<OpenAiRequestBodyBuilder>,
-        tech_logs: &mut TechRequestLogger,
         ctx: &str,
     ) -> Result<OpenAiResponseStream, String> {
         {
@@ -221,6 +223,7 @@ pub struct ToolCallsResult {
     pub result_data: String,
 }
 
+/*
 fn format_response(src: &str) -> serde_json::Value {
     let result: Result<serde_json::Value, _> = serde_json::from_str(src);
 
@@ -229,3 +232,4 @@ fn format_response(src: &str) -> serde_json::Value {
         Err(_) => serde_json::Value::String(src.to_string()),
     }
 }
+ */

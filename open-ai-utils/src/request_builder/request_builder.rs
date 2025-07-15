@@ -1,7 +1,7 @@
 use rust_extensions::StrOrString;
 use tokio::sync::Mutex;
 
-use crate::my_auto_gen::ToolCallModel;
+use crate::my_auto_gen::{TechRequestLogItem, TechRequestLogger, ToolCallModel};
 
 use super::*;
 
@@ -105,5 +105,15 @@ impl OpenAiRequestBodyBuilder {
     ) -> TResult {
         let read_access = self.inner.lock().await;
         callback(&read_access)
+    }
+
+    pub async fn write_tech_log(&self, itm: TechRequestLogItem) {
+        let mut write_access = self.inner.lock().await;
+        write_access.write_tech_log(itm);
+    }
+
+    pub async fn get_tech_log(&self) -> TechRequestLogger {
+        let mut write_access = self.inner.lock().await;
+        std::mem::take(&mut write_access.tech_log)
     }
 }

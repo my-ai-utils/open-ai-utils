@@ -1,15 +1,10 @@
 use std::{sync::Arc, time::Duration};
 
 use flurl::FlUrl;
+use rust_extensions::date_time::DateTimeAsMicroseconds;
 use tokio::sync::RwLock;
 
-use crate::{
-    OpenAiRequestBodyBuilder, ToolCallFunctionDescription,
-    my_auto_gen::{
-        AutoGenSettings, MyAutoGenInner, OpenAiInnerResponseStream, OpenAiStreamChunk,
-        ToolCallModel,
-    },
-};
+use crate::{OpenAiRequestBodyBuilder, ToolCallFunctionDescription, my_auto_gen::*};
 
 pub async fn execute_request_as_stream(
     settings: AutoGenSettings,
@@ -18,6 +13,7 @@ pub async fn execute_request_as_stream(
     inner: Arc<RwLock<MyAutoGenInner>>,
     ctx: String,
 ) {
+    let mut text_result = String::new();
     loop {
         let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
 
@@ -36,6 +32,12 @@ pub async fn execute_request_as_stream(
             })
             .await;
 
+        rb.write_tech_log(TechRequestLogItem {
+            timestamp: DateTimeAsMicroseconds::now(),
+            tp: TechLogItemType::Request,
+            data: serde_json::to_string(&model).unwrap(),
+        })
+        .await;
         let response = fl_url
             .post_json(&model)
             .await
@@ -64,9 +66,10 @@ pub async fn execute_request_as_stream(
         let mut response = OpenAiInnerResponseStream::new(response.get_body_as_stream());
 
         let mut tool_calls_to_execute = vec![];
-        while let Some(next_chunk) = response.get_next_chunk().await.unwrap() {
+        while let Some(next_chunk) = response.get_next_chunk(&rb).await.unwrap() {
             match next_chunk {
                 OpenAiStreamChunk::Text(text) => {
+                    text_result.push_str(&text);
                     let _ = sender.send(Ok(OpenAiStreamChunk::Text(text))).await;
                 }
                 OpenAiStreamChunk::ToolCall {
@@ -75,6 +78,11 @@ pub async fn execute_request_as_stream(
                     params,
                     result: _,
                 } => {
+                    if text_result.len() > 0 {
+                        rb.add_assistant_message(std::mem::take(&mut text_result))
+                            .await;
+                    }
+
                     tool_calls_to_execute.push(ToolCallModel {
                         id,
                         tp: "function".into(),
@@ -85,6 +93,11 @@ pub async fn execute_request_as_stream(
                     });
                 }
             }
+        }
+
+        if text_result.len() > 0 {
+            rb.add_assistant_message(std::mem::take(&mut text_result))
+                .await;
         }
 
         if tool_calls_to_execute.len() == 0 {

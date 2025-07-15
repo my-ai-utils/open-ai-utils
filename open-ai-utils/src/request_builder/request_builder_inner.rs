@@ -1,6 +1,6 @@
 use rust_extensions::StrOrString;
 
-use crate::my_auto_gen::ToolCallModel;
+use crate::my_auto_gen::{TechRequestLogItem, TechRequestLogger, ToolCallModel};
 
 use super::*;
 
@@ -13,6 +13,7 @@ const TOOL_ROLE: &'static str = "tool";
 pub struct OpenAiRequestBodyBuilderInner {
     tools: Vec<ToolsDescriptionJsonModel>,
     model: OpenAiRequestModel,
+    pub(crate) tech_log: TechRequestLogger,
 }
 
 impl OpenAiRequestBodyBuilderInner {
@@ -28,6 +29,7 @@ impl OpenAiRequestBodyBuilderInner {
                 top_p: None,
                 stream: None,
             },
+            tech_log: Default::default(),
         }
     }
 
@@ -54,6 +56,7 @@ impl OpenAiRequestBodyBuilderInner {
                 top_p: None,
                 stream: None,
             },
+            tech_log: Default::default(),
         }
     }
 
@@ -153,6 +156,7 @@ impl OpenAiRequestBodyBuilderInner {
                 stream: None,
             },
             tools: vec![],
+            tech_log: Default::default(),
         }
     }
 
@@ -194,5 +198,9 @@ impl OpenAiRequestBodyBuilderInner {
 
     pub fn get_last_message(&self) -> &OpenAiMessageModel {
         self.model.messages.last().unwrap()
+    }
+
+    pub fn write_tech_log(&mut self, item: TechRequestLogItem) {
+        self.tech_log.add(item);
     }
 }

@@ -1,5 +1,8 @@
+use crate::{OpenAiRequestBodyBuilder, my_auto_gen::TechRequestLogItem};
+
 use super::*;
 use flurl::FlResponseAsStream;
+use rust_extensions::date_time::DateTimeAsMicroseconds;
 
 pub struct OpenAiInnerResponseStream {
     fl_url_response: FlResponseAsStream,
@@ -18,7 +21,10 @@ impl OpenAiInnerResponseStream {
         }
     }
 
-    pub async fn get_next_chunk(&mut self) -> Result<Option<OpenAiStreamChunk>, String> {
+    pub async fn get_next_chunk(
+        &mut self,
+        rb: &OpenAiRequestBodyBuilder,
+    ) -> Result<Option<OpenAiStreamChunk>, String> {
         if self.eof {
             return Ok(None);
         }
@@ -33,6 +39,16 @@ impl OpenAiInnerResponseStream {
                 }
 
                 let next_chunk_from_http = next_chunk_from_http.unwrap();
+
+                rb.write_tech_log(TechRequestLogItem {
+                    timestamp: DateTimeAsMicroseconds::now(),
+                    tp: crate::my_auto_gen::TechLogItemType::Chunk,
+                    data: std::str::from_utf8(next_chunk_from_http.as_slice())
+                        .unwrap()
+                        .to_string(),
+                })
+                .await;
+
                 self.streamed_response_reader
                     .append_data(&next_chunk_from_http);
                 continue;

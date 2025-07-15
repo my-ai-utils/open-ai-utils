@@ -2,13 +2,20 @@ use rust_extensions::date_time::DateTimeAsMicroseconds;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TechRequestLogItem {
-    pub req_ts: DateTimeAsMicroseconds,
-    pub request: serde_json::Value,
-    pub resp_ts: DateTimeAsMicroseconds,
-    pub response: serde_json::Value,
+pub enum TechLogItemType {
+    Request,
+    Response,
+    Chunk,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TechRequestLogItem {
+    pub timestamp: DateTimeAsMicroseconds,
+    pub tp: TechLogItemType,
+    pub data: String,
+}
+
+#[derive(Debug, Default)]
 pub struct TechRequestLogger {
     items: Vec<TechRequestLogItem>,
 }
