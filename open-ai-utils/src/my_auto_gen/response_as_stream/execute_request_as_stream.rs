@@ -32,11 +32,11 @@ pub async fn execute_request_as_stream(
             })
             .await;
 
-        rb.write_tech_log(TechRequestLogItem {
-            timestamp: DateTimeAsMicroseconds::now(),
-            tp: TechLogItemType::Request,
-            data: serde_json::to_string(&model).unwrap(),
-        })
+        rb.write_tech_log(TechRequestLogItem::new_data_as_str(
+            DateTimeAsMicroseconds::now(),
+            TechLogItemType::Request,
+            serde_json::to_string(&model).unwrap(),
+        ))
         .await;
         let response = fl_url
             .post_json(&model)

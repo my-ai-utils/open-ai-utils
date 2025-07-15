@@ -40,13 +40,11 @@ impl OpenAiInnerResponseStream {
 
                 let next_chunk_from_http = next_chunk_from_http.unwrap();
 
-                rb.write_tech_log(TechRequestLogItem {
-                    timestamp: DateTimeAsMicroseconds::now(),
-                    tp: crate::my_auto_gen::TechLogItemType::Chunk,
-                    data: std::str::from_utf8(next_chunk_from_http.as_slice())
-                        .unwrap()
-                        .to_string(),
-                })
+                rb.write_tech_log(TechRequestLogItem::new_data_as_str(
+                    DateTimeAsMicroseconds::now(),
+                    crate::my_auto_gen::TechLogItemType::Chunk,
+                    std::str::from_utf8(next_chunk_from_http.as_slice()).unwrap(),
+                ))
                 .await;
 
                 self.streamed_response_reader

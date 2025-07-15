@@ -85,11 +85,11 @@ impl MyAutoGen {
         loop {
             let model = rb.get_model().await;
 
-            rb.write_tech_log(super::TechRequestLogItem {
-                timestamp: DateTimeAsMicroseconds::now(),
-                tp: super::TechLogItemType::Request,
-                data: serde_json::to_string(&model).unwrap(),
-            })
+            rb.write_tech_log(super::TechRequestLogItem::new_data_as_str(
+                DateTimeAsMicroseconds::now(),
+                super::TechLogItemType::Request,
+                serde_json::to_string(&model).unwrap(),
+            ))
             .await;
 
             let request = execute_request(settings, rb)
@@ -99,22 +99,22 @@ impl MyAutoGen {
             let (model, response_body) = match request {
                 Ok(resp) => resp,
                 Err(err) => {
-                    rb.write_tech_log(super::TechRequestLogItem {
-                        timestamp: DateTimeAsMicroseconds::now(),
-                        tp: super::TechLogItemType::Response,
-                        data: err.to_string(),
-                    })
+                    rb.write_tech_log(super::TechRequestLogItem::new_data_as_str(
+                        DateTimeAsMicroseconds::now(),
+                        super::TechLogItemType::Response,
+                        err.as_str(),
+                    ))
                     .await;
 
                     return Err(err);
                 }
             };
 
-            rb.write_tech_log(super::TechRequestLogItem {
-                timestamp: DateTimeAsMicroseconds::now(),
-                tp: super::TechLogItemType::Response,
-                data: response_body.to_string(),
-            })
+            rb.write_tech_log(super::TechRequestLogItem::new_data_as_str(
+                DateTimeAsMicroseconds::now(),
+                super::TechLogItemType::Response,
+                response_body.as_str(),
+            ))
             .await;
 
             let message_to_analyze = match model.peek_message() {
@@ -222,14 +222,3 @@ pub struct ToolCallsResult {
     pub request_data: String,
     pub result_data: String,
 }
-
-/*
-fn format_response(src: &str) -> serde_json::Value {
-    let result: Result<serde_json::Value, _> = serde_json::from_str(src);
-
-    match result {
-        Ok(result) => result,
-        Err(_) => serde_json::Value::String(src.to_string()),
-    }
-}
- */
