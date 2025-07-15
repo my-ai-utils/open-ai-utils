@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use flurl::{FlResponseAsStream, FlUrl};
+use flurl::FlUrl;
 use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
@@ -8,19 +8,20 @@ use tokio::sync::RwLock;
 use crate::{
     FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
-        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, RemoteToolFunctions,
-        RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction, ToolFunctions,
+        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, OpenAiResponseStream,
+        RemoteToolFunctions, RemoteToolFunctionsHandler, TechRequestLogger, ToolFunction,
+        ToolFunctions,
     },
 };
 
 pub struct MyAutoGen {
-    inner: RwLock<MyAutoGenInner>,
+    inner: Arc<RwLock<MyAutoGenInner>>,
 }
 
 impl MyAutoGen {
     pub fn new() -> Self {
         Self {
-            inner: RwLock::new(MyAutoGenInner::new()),
+            inner: Arc::new(RwLock::new(MyAutoGenInner::new())),
         }
     }
 
@@ -72,7 +73,7 @@ impl MyAutoGen {
     pub async fn execute(
         &self,
         settings: &AutoGenSettings,
-        rb: &mut OpenAiRequestBodyBuilder,
+        rb: &OpenAiRequestBodyBuilder,
         tech_logs: &mut TechRequestLogger,
         ctx: &str,
     ) -> Result<Vec<ToolCallsResult>, String> {
@@ -81,11 +82,12 @@ impl MyAutoGen {
             inner.populate_request_builder(rb).await;
         }
 
-        let mut tool_calls_result = Vec::new();
+        let mut tool_calls_result: Vec<ToolCallsResult> = Vec::new();
 
         loop {
             let req_ts = DateTimeAsMicroseconds::now();
-            let req_txt = serde_json::to_string(rb.get_model()).unwrap();
+            let model = rb.get_model().await;
+            let req_txt = serde_json::to_string(&model).unwrap();
 
             let request = execute_request(settings, rb)
                 .await
@@ -121,30 +123,14 @@ impl MyAutoGen {
 
             match message_to_analyze {
                 super::OpenAiResponse::Message(message) => {
-                    rb.add_assistant_message(message.to_string());
+                    rb.add_assistant_message(message.to_string()).await;
                     return Ok(tool_calls_result);
                 }
                 super::OpenAiResponse::ToolCall(tool_call_models) => {
-                    rb.add_assistant_response_as_tool_calls(tool_call_models);
-                    for tool_call_model in tool_call_models {
-                        let func_name = tool_call_model.function.name.as_str();
+                    let tool_call_results =
+                        super::exec_tool_call(tool_call_models, rb, &self.inner, ctx).await?;
 
-                        let call_result = {
-                            let inner = self.inner.read().await;
-                            let result = inner
-                                .invoke_func(func_name, &tool_call_model.function.arguments, ctx)
-                                .await?;
-                            result
-                        };
-
-                        tool_calls_result.push(ToolCallsResult {
-                            fn_name: tool_call_model.function.name.to_string(),
-                            request_data: tool_call_model.function.arguments.to_string(),
-                            result_data: call_result.clone(),
-                        });
-
-                        rb.add_tool_call_response(tool_call_model, call_result);
-                    }
+                    tool_calls_result.extend(tool_call_results);
                 }
             }
         }
@@ -153,30 +139,32 @@ impl MyAutoGen {
     pub async fn execute_request_as_stream(
         &self,
         settings: &AutoGenSettings,
-        rb: &mut OpenAiRequestBodyBuilder,
-    ) -> Result<FlResponseAsStream, String> {
-        let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
-
-        if let Some(api_key) = settings.api_key.as_ref() {
-            fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
-        };
-
-        if settings.do_not_reuse_connection.unwrap_or(false) {
-            fl_url = fl_url.do_not_reuse_connection();
+        rb: Arc<OpenAiRequestBodyBuilder>,
+        tech_logs: &mut TechRequestLogger,
+        ctx: &str,
+    ) -> Result<OpenAiResponseStream, String> {
+        {
+            let inner = self.inner.read().await;
+            inner.populate_request_builder(&rb).await;
         }
 
-        let response = fl_url
-            .post_json(rb.get_model())
-            .await
-            .map_err(|itm| itm.to_string())?;
+        let (result, sender) = OpenAiResponseStream::new();
 
-        Ok(response.get_body_as_stream())
+        tokio::spawn(super::execute_request_as_stream(
+            settings.clone(),
+            sender,
+            rb,
+            self.inner.clone(),
+            ctx.to_string(),
+        ));
+
+        Ok(result)
     }
 }
 
 async fn execute_request(
     settings: &AutoGenSettings,
-    rb: &mut OpenAiRequestBodyBuilder,
+    rb: &OpenAiRequestBodyBuilder,
 ) -> Result<(OpenAiRespModel, String), String> {
     let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
 
@@ -188,8 +176,9 @@ async fn execute_request(
         fl_url = fl_url.do_not_reuse_connection();
     }
 
+    let model = rb.get_model().await;
     let response = fl_url
-        .post_json(rb.get_model())
+        .post_json(&model)
         .await
         .map_err(|itm| itm.to_string())?;
 

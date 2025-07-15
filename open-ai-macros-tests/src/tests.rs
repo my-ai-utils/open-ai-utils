@@ -94,8 +94,8 @@ mod tests {
 
         println!("{}", json);
     }
-    #[test]
-    fn test_builder_and_model() {
+    #[tokio::test]
+    async fn test_builder_and_model() {
         let mut builder = OpenAiRequestBodyBuilder::new_with_system_prompt(
             "test_system_prompt_data",
             open_ai_utils::LlmModel::Gpt4o,
@@ -109,9 +109,13 @@ mod tests {
 
         let func_json_description = serde_json::to_value(&func_json_description).unwrap();
 
-        builder.add_tools_call_description(func_json_description);
+        builder
+            .add_tools_call_description(func_json_description)
+            .await;
 
-        let json_str = serde_json::to_string_pretty(builder.get_model()).unwrap();
+        let model = builder.get_model().await;
+
+        let json_str = serde_json::to_string_pretty(&model).unwrap();
 
         println!("{}", json_str);
     }

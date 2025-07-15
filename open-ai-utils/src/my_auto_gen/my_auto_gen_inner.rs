@@ -28,12 +28,12 @@ impl MyAutoGenInner {
         }
     }
 
-    pub async fn populate_request_builder(&self, rb: &mut OpenAiRequestBodyBuilder) {
+    pub async fn populate_request_builder(&self, rb: &OpenAiRequestBodyBuilder) {
         match &self {
             MyAutoGenInner::NotInitialized => {}
             MyAutoGenInner::LocalToolFunctions(local_tool_functions) => {
                 let tools = local_tool_functions.get_tools_description();
-                rb.add_tools(tools);
+                rb.add_tools(tools).await;
             }
             MyAutoGenInner::RemoteToolFunctions(handler) => {
                 let description = handler.data_src.get_tools_description().await;
@@ -44,7 +44,8 @@ impl MyAutoGenInner {
                     println!("{}", &description);
                     panic!("{}", err);
                 }
-                rb.add_tools(tools.unwrap());
+
+                rb.add_tools(tools.unwrap()).await;
             }
         }
     }

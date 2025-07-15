@@ -1,5 +1,6 @@
 use rust_extensions::StrOrString;
 
+#[derive(Debug, Clone)]
 pub struct AutoGenSettings {
     pub url: StrOrString<'static>,
     pub api_key: Option<String>,

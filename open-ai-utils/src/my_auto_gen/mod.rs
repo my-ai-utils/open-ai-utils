@@ -14,3 +14,8 @@ mod remote_tool_function;
 pub use remote_tool_function::*;
 mod tool_functions;
 pub use tool_functions::*;
+
+mod response_as_stream;
+pub use response_as_stream::*;
+mod exec_tool_call;
+pub use exec_tool_call::*;
