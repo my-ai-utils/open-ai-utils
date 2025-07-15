@@ -86,6 +86,11 @@ impl OpenAiRequestBodyBuilder {
         rb(&mut write_access);
     }
 
+    pub async fn remove_tool_calls(&self) {
+        let mut write_access = self.inner.lock().await;
+        write_access.remove_tool_calls();
+    }
+
     pub async fn modify_and_get_result<TResult>(
         &self,
         rb: impl Fn(&mut OpenAiRequestBodyBuilderInner) -> TResult,
@@ -94,8 +99,11 @@ impl OpenAiRequestBodyBuilder {
         rb(&mut write_access)
     }
 
-    pub async fn get<TResult>(&self, callback: impl Fn(&OpenAiRequestBodyBuilderInner) -> TResult) {
+    pub async fn get<TResult>(
+        &self,
+        callback: impl Fn(&OpenAiRequestBodyBuilderInner) -> TResult,
+    ) -> TResult {
         let read_access = self.inner.lock().await;
-        callback(&read_access);
+        callback(&read_access)
     }
 }
