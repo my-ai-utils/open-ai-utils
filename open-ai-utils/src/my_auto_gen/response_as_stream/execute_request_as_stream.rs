@@ -38,9 +38,11 @@ pub async fn execute_request_as_stream(
             println!("{:?}", std::str::from_utf8(body.as_slice()));
             let err = format!("Status code: {}", status_code);
 
+            let body_str = std::str::from_utf8(body.as_slice()).unwrap_or("Body is not UTF-8");
+
             logger.write_error(
                 "execute_open_ai_request_as_stream".to_string(),
-                err.to_string(),
+                format!("{}. Body: {}", err, body_str),
                 create_logs_context(&settings, None),
             );
             let _ = sender.send(Err(err)).await;
