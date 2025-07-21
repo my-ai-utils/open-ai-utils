@@ -11,13 +11,13 @@ pub struct OpenAiRequestModel {
     pub temperature: Option<f64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub n: Option<u32>,
+    pub n: Option<i64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub top_k: Option<u32>,
+    pub top_k: Option<i64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f64>,
