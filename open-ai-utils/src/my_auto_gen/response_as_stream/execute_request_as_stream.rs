@@ -145,6 +145,8 @@ async fn prepare_open_ai_streamed_request(
             })
             .await;
 
+        //println!("{}", serde_json::to_string_pretty(&model).unwrap());
+
         rb.write_tech_log(TechRequestLogItem::new_data_as_str(
             DateTimeAsMicroseconds::now(),
             TechLogItemType::Request,

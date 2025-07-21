@@ -7,6 +7,17 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
 
     let enum_param = attr.try_get_named_param("enum");
 
+    let default_value = if let Some(default_value) = attr.try_get_named_param("default") {
+        let default_value = default_value.unwrap_as_value()?.as_string()?;
+        let default_value = default_value.as_str();
+
+        quote::quote! {
+            Some(#default_value.into())
+        }
+    } else {
+        quote::quote! {None}
+    };
+
     let enum_to_render = match enum_param {
         Some(enum_value) => {
             let array = enum_value.unwrap_as_vec()?;
@@ -32,7 +43,7 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
         quote::quote! {
            properties.insert(
             #prop_name.into(),
-            Option::<#as_token>::get_type_description(#value, None, #enum_to_render),
+            Option::<#as_token>::get_type_description(#value, #default_value, #enum_to_render),
         );
          }
     } else {
@@ -40,7 +51,7 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
         quote::quote! {
            properties.insert(
             #prop_name.into(),
-            #token::get_type_description(#value, None, #enum_to_render),
+            #token::get_type_description(#value, #default_value, #enum_to_render),
         );
          }
     };

@@ -19,7 +19,7 @@ fn generate_description_of_opt_parameter<T: GetJsonTypeName>(
     if let Some(enum_data) = enum_data {
         return serde_json::json! {
            {
-                "type": [tp, "null"],
+                "type": tp,
                 "default": default,
                 "enum": enum_data,
                 "description": description
@@ -29,7 +29,7 @@ fn generate_description_of_opt_parameter<T: GetJsonTypeName>(
 
     return serde_json::json! {
        {
-             "type": [tp, "null"],
+             "type": tp,
              "default": default,
              "description": description
        }
