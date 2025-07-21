@@ -1,12 +1,12 @@
 use std::{sync::Arc, time::Duration};
 
 use flurl::FlUrl;
-use rust_extensions::{base64::IntoBase64, date_time::DateTimeAsMicroseconds};
+use rust_extensions::{Logger, base64::IntoBase64, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
 use crate::{
-    FunctionToolCallDescription, OpenAiRequestBodyBuilder,
+    FunctionToolCallDescription, OpenAiRequestBodyBuilder, OtherRequestData,
     my_auto_gen::{
         AutoGenSettings, MyAutoGenInner, OpenAiRespModel, OpenAiResponseStream,
         RemoteToolFunctions, RemoteToolFunctionsHandler, ToolFunction, ToolFunctions,
@@ -15,12 +15,14 @@ use crate::{
 
 pub struct MyAutoGen {
     inner: Arc<RwLock<MyAutoGenInner>>,
+    logger: Arc<dyn Logger + Send + Sync>,
 }
 
 impl MyAutoGen {
-    pub fn new() -> Self {
+    pub fn new(logger: Arc<dyn Logger + Send + Sync>) -> Self {
         Self {
             inner: Arc::new(RwLock::new(MyAutoGenInner::new())),
+            logger,
         }
     }
 
@@ -74,6 +76,7 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: &OpenAiRequestBodyBuilder,
         ctx: &str,
+        other_request_data: OtherRequestData,
     ) -> Result<Vec<ToolCallsResult>, String> {
         {
             let inner = self.inner.read().await;
@@ -83,16 +86,7 @@ impl MyAutoGen {
         let mut tool_calls_result: Vec<ToolCallsResult> = Vec::new();
 
         loop {
-            let model = rb.get_model().await;
-
-            rb.write_tech_log(super::TechRequestLogItem::new_data_as_str(
-                DateTimeAsMicroseconds::now(),
-                super::TechLogItemType::Request,
-                serde_json::to_string(&model).unwrap(),
-            ))
-            .await;
-
-            let request = execute_request(settings, rb)
+            let request = execute_request(settings, rb, &other_request_data)
                 .await
                 .map_err(|itm| itm.to_string());
 
@@ -144,6 +138,7 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: Arc<OpenAiRequestBodyBuilder>,
         ctx: &str,
+        other_request_data: OtherRequestData,
     ) -> Result<OpenAiResponseStream, String> {
         {
             let inner = self.inner.read().await;
@@ -158,6 +153,8 @@ impl MyAutoGen {
             rb,
             self.inner.clone(),
             ctx.to_string(),
+            other_request_data,
+            self.logger.clone(),
         ));
 
         Ok(result)
@@ -167,6 +164,7 @@ impl MyAutoGen {
 async fn execute_request(
     settings: &AutoGenSettings,
     rb: &OpenAiRequestBodyBuilder,
+    other_request_data: &OtherRequestData,
 ) -> Result<(OpenAiRespModel, String), String> {
     let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
 
@@ -178,7 +176,15 @@ async fn execute_request(
         fl_url = fl_url.do_not_reuse_connection();
     }
 
-    let model = rb.get_model().await;
+    let model = rb.get_model(other_request_data).await;
+
+    rb.write_tech_log(super::TechRequestLogItem::new_data_as_str(
+        DateTimeAsMicroseconds::now(),
+        super::TechLogItemType::Request,
+        serde_json::to_string(&model).unwrap(),
+    ))
+    .await;
+
     let response = fl_url
         .post_json(&model)
         .await

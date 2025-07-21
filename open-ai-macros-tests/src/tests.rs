@@ -113,7 +113,7 @@ mod tests {
             .add_tools_call_description(func_json_description)
             .await;
 
-        let model = builder.get_model().await;
+        let model = builder.get_model(&Default::default()).await;
 
         let json_str = serde_json::to_string_pretty(&model).unwrap();
 

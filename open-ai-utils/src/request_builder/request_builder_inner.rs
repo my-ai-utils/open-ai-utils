@@ -28,6 +28,10 @@ impl OpenAiRequestBodyBuilderInner {
                 temperature: None,
                 top_p: None,
                 stream: None,
+                frequency_penalty: None,
+                presence_penalty: None,
+                n: None,
+                top_k: None,
             },
             tech_log: Default::default(),
         }
@@ -55,6 +59,10 @@ impl OpenAiRequestBodyBuilderInner {
                 temperature: None,
                 top_p: None,
                 stream: None,
+                frequency_penalty: None,
+                presence_penalty: None,
+                n: None,
+                top_k: None,
             },
             tech_log: Default::default(),
         }
@@ -154,6 +162,10 @@ impl OpenAiRequestBodyBuilderInner {
                 temperature: None,
                 top_p: None,
                 stream: None,
+                frequency_penalty: None,
+                presence_penalty: None,
+                n: None,
+                top_k: None,
             },
             tools: vec![],
             tech_log: Default::default(),
@@ -172,14 +184,33 @@ impl OpenAiRequestBodyBuilderInner {
         self.model.tools = Some(tools);
     }
 
-    pub fn get_model(&mut self) -> &OpenAiRequestModel {
+    /*
+    pub fn set_other_parameters(&mut self, other_request_data: OtherRequestData) {
+        self.model.temperature = other_request_data.temperature;
+        self.model.top_p = other_request_data.top_p;
+        self.model.n = other_request_data.n;
+        self.model.presence_penalty = other_request_data.presence_penalty;
+        self.model.frequency_penalty = other_request_data.frequency_penalty;
+    }
+     */
+
+    pub fn get_model(&mut self, other_request_data: &OtherRequestData) -> OpenAiRequestModel {
         if self.tools.len() > 0 {
             if self.model.tools.is_none() {
                 self.model.tools = Some(serde_json::to_value(&self.tools).unwrap());
             }
         }
 
-        &self.model
+        let mut result = self.model.clone();
+
+        result.n = other_request_data.n;
+        result.presence_penalty = other_request_data.presence_penalty;
+        result.frequency_penalty = other_request_data.frequency_penalty;
+        result.top_p = other_request_data.top_p;
+        result.temperature = other_request_data.temperature;
+        result.top_k = other_request_data.top_k;
+
+        result
     }
 
     pub fn remove_tool_calls(&mut self) {

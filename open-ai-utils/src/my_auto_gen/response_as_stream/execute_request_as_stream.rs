@@ -1,10 +1,12 @@
-use std::{sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use flurl::FlUrl;
-use rust_extensions::date_time::DateTimeAsMicroseconds;
+use flurl::{FlUrl, FlUrlResponse};
+use rust_extensions::{Logger, date_time::DateTimeAsMicroseconds};
 use tokio::sync::RwLock;
 
-use crate::{OpenAiRequestBodyBuilder, ToolCallFunctionDescription, my_auto_gen::*};
+use crate::{
+    OpenAiRequestBodyBuilder, OtherRequestData, ToolCallFunctionDescription, my_auto_gen::*,
+};
 
 pub async fn execute_request_as_stream(
     settings: AutoGenSettings,
@@ -12,44 +14,21 @@ pub async fn execute_request_as_stream(
     rb: Arc<OpenAiRequestBodyBuilder>,
     inner: Arc<RwLock<MyAutoGenInner>>,
     ctx: String,
+    other_request_data: OtherRequestData,
+    logger: Arc<dyn Logger + Send + Sync>,
 ) {
     let mut text_result = String::new();
     loop {
-        let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
-
-        if let Some(api_key) = settings.api_key.as_ref() {
-            fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
-        };
-
-        if settings.do_not_reuse_connection.unwrap_or(false) {
-            fl_url = fl_url.do_not_reuse_connection();
-        }
-
-        let model = rb
-            .modify_and_get_result(|rb| {
-                rb.set_stream();
-                rb.get_model().clone()
-            })
-            .await;
-
-        rb.write_tech_log(TechRequestLogItem::new_data_as_str(
-            DateTimeAsMicroseconds::now(),
-            TechLogItemType::Request,
-            serde_json::to_string(&model).unwrap(),
-        ))
-        .await;
-        let response = fl_url
-            .post_json(&model)
-            .await
-            .map_err(|itm| itm.to_string());
-
-        let response = match response {
-            Ok(response) => response,
-            Err(err) => {
-                let _ = sender.send(Err(err)).await;
-                return;
-            }
-        };
+        let response =
+            match prepare_open_ai_streamed_request(&settings, &rb, &logger, &other_request_data)
+                .await
+            {
+                Ok(response) => response,
+                Err(err) => {
+                    let _ = sender.send(Err(err)).await;
+                    return;
+                }
+            };
 
         let status_code = response.get_status_code();
 
@@ -59,6 +38,11 @@ pub async fn execute_request_as_stream(
             println!("{:?}", std::str::from_utf8(body.as_slice()));
             let err = format!("Status code: {}", status_code);
 
+            logger.write_error(
+                "execute_open_ai_request_as_stream".to_string(),
+                err.to_string(),
+                create_logs_context(&settings, None),
+            );
             let _ = sender.send(Err(err)).await;
             return;
         }
@@ -122,9 +106,81 @@ pub async fn execute_request_as_stream(
                 }
             }
             Err(err) => {
+                logger.write_error(
+                    "execute_open_ai_request_as_stream".to_string(),
+                    err.to_string(),
+                    create_logs_context(&settings, None),
+                );
                 let _ = sender.send(Err(err)).await;
                 return;
             }
         }
     }
+}
+
+async fn prepare_open_ai_streamed_request(
+    settings: &AutoGenSettings,
+    rb: &OpenAiRequestBodyBuilder,
+    logger: &Arc<dyn Logger + Send + Sync>,
+    other_request_data: &OtherRequestData,
+) -> Result<FlUrlResponse, String> {
+    let mut attempt = 0;
+    loop {
+        let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
+
+        if let Some(api_key) = settings.api_key.as_ref() {
+            fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
+        };
+
+        if settings.do_not_reuse_connection.unwrap_or(false) {
+            fl_url = fl_url.do_not_reuse_connection();
+        }
+
+        let model = rb
+            .modify_and_get_result(|rb| {
+                rb.set_stream();
+                rb.get_model(other_request_data)
+            })
+            .await;
+
+        rb.write_tech_log(TechRequestLogItem::new_data_as_str(
+            DateTimeAsMicroseconds::now(),
+            TechLogItemType::Request,
+            serde_json::to_string(&model).unwrap(),
+        ))
+        .await;
+        let response = fl_url.post_json(&model).await;
+
+        match response {
+            Ok(response) => return Ok(response),
+            Err(err) => {
+                let msg = format!("{:?}", err);
+
+                logger.write_debug_info(
+                    "prepare_open_ai_streamed_request".into(),
+                    msg.clone(),
+                    create_logs_context(settings, Some(attempt)),
+                );
+                if attempt >= 3 {
+                    return Err(format!("{:?}", err));
+                }
+
+                attempt += 1;
+            }
+        };
+    }
+}
+
+fn create_logs_context(
+    settings: &AutoGenSettings,
+    attempt: Option<usize>,
+) -> Option<HashMap<String, String>> {
+    let mut ctx = HashMap::new();
+
+    if let Some(attempt) = attempt {
+        ctx.insert("attempt".to_string(), attempt.to_string());
+    }
+
+    ctx.insert("url".to_string(), settings.url.as_str().to_string());
+    Some(ctx)
 }
