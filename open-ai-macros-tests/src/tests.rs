@@ -105,6 +105,7 @@ mod tests {
             name: "filter_showrooms".to_string(),
             description: "Filters company location data from a JSON file based on criteria like city (extracted from address), specific service offered (e.g., Sales, Repairs), and geolocation ranges (latitude/longitude).".to_string(),
             parameters: MyRequestModel::get_description(),
+            strict: Some(true),
         };
 
         let func_json_description = serde_json::to_value(&func_json_description).unwrap();

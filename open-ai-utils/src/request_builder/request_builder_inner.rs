@@ -123,7 +123,7 @@ impl OpenAiRequestBodyBuilderInner {
         });
     }
 
-    pub fn add_tool_call_response(&mut self, src: &ToolCallModel, result: String) {
+    pub fn add_ok_tool_call_response(&mut self, src: &ToolCallModel, result: String) {
         self.model.messages.push(OpenAiMessageModel {
             role: TOOL_ROLE.to_owned(),
             content: Some(result),

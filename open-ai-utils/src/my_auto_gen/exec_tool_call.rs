@@ -31,7 +31,7 @@ pub async fn exec_tool_call(
             result_data: call_result.clone(),
         });
 
-        rb.add_tool_call_response(tool_call_model, call_result)
+        rb.add_ok_tool_call_response(tool_call_model, call_result)
             .await;
     }
     Ok(tool_calls_result)

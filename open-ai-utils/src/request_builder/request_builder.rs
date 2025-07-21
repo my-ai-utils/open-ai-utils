@@ -64,9 +64,9 @@ impl OpenAiRequestBodyBuilder {
         write_access.add_assistant_message(message);
     }
 
-    pub async fn add_tool_call_response(&self, src: &ToolCallModel, result: String) {
+    pub async fn add_ok_tool_call_response(&self, src: &ToolCallModel, result: String) {
         let mut write_access = self.inner.lock().await;
-        write_access.add_tool_call_response(src, result);
+        write_access.add_ok_tool_call_response(src, result);
     }
 
     pub async fn add_assistant_response_as_tool_calls(

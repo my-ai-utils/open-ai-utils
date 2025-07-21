@@ -36,6 +36,7 @@ impl ToolFunctions {
             name: func_name.to_string(),
             description: func_description.to_string(),
             parameters: ParamType::get_description(),
+            strict: Some(true),
         };
 
         let holder = ToolFunctionHolder::new(func_name, tool_function);
