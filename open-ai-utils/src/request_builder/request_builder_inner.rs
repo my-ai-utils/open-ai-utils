@@ -31,7 +31,6 @@ impl OpenAiRequestBodyBuilderInner {
                 frequency_penalty: None,
                 presence_penalty: None,
                 n: None,
-                top_k: None,
             },
             tech_log: Default::default(),
         }
@@ -62,7 +61,6 @@ impl OpenAiRequestBodyBuilderInner {
                 frequency_penalty: None,
                 presence_penalty: None,
                 n: None,
-                top_k: None,
             },
             tech_log: Default::default(),
         }
@@ -165,7 +163,6 @@ impl OpenAiRequestBodyBuilderInner {
                 frequency_penalty: None,
                 presence_penalty: None,
                 n: None,
-                top_k: None,
             },
             tools: vec![],
             tech_log: Default::default(),
