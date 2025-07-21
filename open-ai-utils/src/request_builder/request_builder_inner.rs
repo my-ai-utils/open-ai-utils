@@ -208,7 +208,6 @@ impl OpenAiRequestBodyBuilderInner {
         result.frequency_penalty = other_request_data.frequency_penalty;
         result.top_p = other_request_data.top_p;
         result.temperature = other_request_data.temperature;
-        result.top_k = other_request_data.top_k;
 
         result
     }

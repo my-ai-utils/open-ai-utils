@@ -17,9 +17,6 @@ pub struct OpenAiRequestModel {
     pub top_p: Option<f64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub top_k: Option<i64>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f64>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
