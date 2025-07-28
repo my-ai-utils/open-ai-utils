@@ -23,9 +23,10 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
 
     let result = quote::quote! {
 
+        #[async_trait::async_trait]
         impl open_ai_utils::FunctionToolCallDescription  for #struct_name{
 
-        fn get_description() -> serde_json::Value {
+        async fn get_description() -> serde_json::Value {
         use open_ai_utils::FunctionTypeDescription;
 
         let mut params = serde_json::Map::new();

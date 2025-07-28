@@ -23,7 +23,7 @@ impl ToolFunctions {
         }
     }
 
-    pub fn register_function<
+    pub async fn register_function<
         ParamType: FunctionToolCallDescription + DeserializeOwned + Send + Sync + 'static,
         TToolFunction: ToolFunction<ParamType> + Send + Sync + 'static,
     >(
@@ -35,7 +35,7 @@ impl ToolFunctions {
         let func_json_description = FunctionDescriptionJsonModel {
             name: func_name.to_string(),
             description: func_description.to_string(),
-            parameters: ParamType::get_description(),
+            parameters: ParamType::get_description().await,
             strict: None,
         };
 

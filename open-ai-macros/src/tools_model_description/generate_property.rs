@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use proc_macro2::TokenStream;
 use types_reader::{AnyValueAsStr, PropertyType, StructProperty};
 
@@ -20,16 +22,24 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
 
     let enum_to_render = match enum_param {
         Some(enum_value) => {
-            let array = enum_value.unwrap_as_vec()?;
+            if let Ok(array) = enum_value.unwrap_as_vec() {
+                let mut array_as_tokens = Vec::new();
 
-            let mut array_as_tokens = Vec::new();
+                for itm in array {
+                    let as_str = itm.unwrap_as_value()?.as_str()?;
+                    array_as_tokens.push(quote::quote! {#as_str.into(), });
+                }
 
-            for itm in array {
-                let as_str = itm.unwrap_as_value()?.as_str()?;
-                array_as_tokens.push(quote::quote! {#as_str, });
+                quote::quote! {Some( vec![#(#array_as_tokens)*] )}
+            } else {
+                let as_str = enum_value.unwrap_as_value()?.as_str()?;
+
+                let enum_fn_name = TokenStream::from_str(as_str).unwrap();
+                quote::quote! {
+                    #enum_fn_name().await
+
+                }
             }
-
-            quote::quote! {Some( &[#(#array_as_tokens)*] )}
         }
         None => quote::quote! {None},
     };
@@ -43,7 +53,7 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
         quote::quote! {
            properties.insert(
             #prop_name.into(),
-            Option::<#as_token>::get_type_description(#value, #default_value, #enum_to_render),
+            Option::<#as_token>::get_type_description(#value, #default_value, #enum_to_render).await,
         );
          }
     } else {
@@ -51,7 +61,7 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
         quote::quote! {
            properties.insert(
             #prop_name.into(),
-            #token::get_type_description(#value, #default_value, #enum_to_render),
+            #token::get_type_description(#value, #default_value, #enum_to_render).await,
         );
          }
     };

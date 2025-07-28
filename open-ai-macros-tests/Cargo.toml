@@ -14,3 +14,5 @@ open-ai-macros = { path = "../open-ai-macros" }
 open-ai-utils = { path = "../open-ai-utils" }
 serde = { version = "*", features = ["derive"] }
 serde_json = "*"
+
+rust-extensions = { tag = "0.1.5", git = "https://github.com/MyJetTools/rust-extensions.git" }

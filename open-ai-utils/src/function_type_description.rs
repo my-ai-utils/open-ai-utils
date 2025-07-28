@@ -1,12 +1,16 @@
+use rust_extensions::StrOrString;
+
+#[async_trait::async_trait]
 pub trait FunctionToolCallDescription {
-    fn get_description() -> serde_json::Value;
+    async fn get_description() -> serde_json::Value;
 }
 
+#[async_trait::async_trait]
 pub trait FunctionTypeDescription {
-    fn get_type_description(
+    async fn get_type_description(
         description: &str,
         default: Option<&str>,
-        enum_data: Option<&[&str]>,
+        enum_data: Option<Vec<StrOrString<'static>>>,
     ) -> serde_json::Value;
 }
 
