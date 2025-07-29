@@ -52,10 +52,16 @@ impl OpenAiInnerResponseStream {
                 continue;
             };
 
+            println!("{:?}", data);
+
             while let Some(choice) = data.get_choice() {
                 if let Some(content) = choice.delta.content {
+                    if self.tool_calls.len() > 0 {
+                        let tool_calls = std::mem::take(&mut self.tool_calls);
+                        return Ok(Some(OpenAiStreamHttpChunk::ToolCalls(tool_calls)));
+                    }
+
                     if content.len() > 0 {
-                        self.tool_calls = vec![];
                         return Ok(Some(OpenAiStreamHttpChunk::Text(content)));
                     }
                 }
