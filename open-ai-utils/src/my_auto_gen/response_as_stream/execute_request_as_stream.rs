@@ -54,8 +54,6 @@ pub async fn execute_request_as_stream(
         let mut tool_calls_to_execute = vec![];
 
         while let Some(next_chunk) = response.get_next_chunk(&rb).await.unwrap() {
-            println!("Next chunk: {:?}", next_chunk);
-
             match next_chunk {
                 OpenAiStreamHttpChunk::Text(text) => {
                     text_result.push_str(&text);

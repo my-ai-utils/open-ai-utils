@@ -52,8 +52,6 @@ impl OpenAiInnerResponseStream {
                 continue;
             };
 
-            println!("{:?}", data);
-
             while let Some(choice) = data.get_choice() {
                 if let Some(content) = choice.delta.content {
                     if self.tool_calls.len() > 0 {
