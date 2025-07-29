@@ -52,31 +52,29 @@ pub async fn execute_request_as_stream(
         let mut response = OpenAiInnerResponseStream::new(response.get_body_as_stream());
 
         let mut tool_calls_to_execute = vec![];
+
         while let Some(next_chunk) = response.get_next_chunk(&rb).await.unwrap() {
             match next_chunk {
-                OpenAiStreamChunk::Text(text) => {
+                OpenAiStreamHttpChunk::Text(text) => {
                     text_result.push_str(&text);
                     let _ = sender.send(Ok(OpenAiStreamChunk::Text(text))).await;
                 }
-                OpenAiStreamChunk::ToolCall {
-                    id,
-                    fn_name,
-                    params,
-                    result: _,
-                } => {
+                OpenAiStreamHttpChunk::ToolCalls(tool_calls) => {
                     if text_result.len() > 0 {
                         rb.add_assistant_message(std::mem::take(&mut text_result))
                             .await;
                     }
 
-                    tool_calls_to_execute.push(ToolCallModel {
-                        id,
-                        tp: "function".into(),
-                        function: ToolCallFunctionDescription {
-                            name: fn_name,
-                            arguments: params,
-                        },
-                    });
+                    for tool_call in tool_calls {
+                        tool_calls_to_execute.push(ToolCallModel {
+                            id: tool_call.id,
+                            tp: "function".into(),
+                            function: ToolCallFunctionDescription {
+                                name: tool_call.fn_name,
+                                arguments: tool_call.params,
+                            },
+                        });
+                    }
                 }
             }
         }
@@ -95,17 +93,19 @@ pub async fn execute_request_as_stream(
 
         match tool_call_results {
             Ok(mut results) => {
+                let mut to_send = Vec::with_capacity(tool_calls_to_execute.len());
                 for tool_call in tool_calls_to_execute {
                     let result = results.remove(0);
-                    let _ = sender
-                        .send(Ok(OpenAiStreamChunk::ToolCall {
-                            id: tool_call.id,
-                            fn_name: tool_call.function.name,
-                            params: tool_call.function.arguments,
-                            result: result.result_data,
-                        }))
-                        .await;
+
+                    to_send.push(ToolCallChunkModel {
+                        id: tool_call.id,
+                        fn_name: tool_call.function.name,
+                        params: tool_call.function.arguments,
+                        result: result.result_data,
+                    });
                 }
+
+                let _ = sender.send(Ok(OpenAiStreamChunk::ToolCalls(to_send))).await;
             }
             Err(err) => {
                 logger.write_error(

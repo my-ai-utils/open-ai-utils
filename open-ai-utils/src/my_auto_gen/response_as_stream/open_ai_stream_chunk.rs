@@ -1,10 +1,26 @@
 #[derive(Debug)]
+pub enum OpenAiStreamHttpChunk {
+    Text(String),
+    ToolCalls(Vec<ToolCallChunkHttpModel>),
+}
+
+#[derive(Debug)]
+pub struct ToolCallChunkHttpModel {
+    pub id: String,
+    pub fn_name: String,
+    pub params: String,
+}
+
+#[derive(Debug)]
 pub enum OpenAiStreamChunk {
     Text(String),
-    ToolCall {
-        id: String,
-        fn_name: String,
-        params: String,
-        result: String,
-    },
+    ToolCalls(Vec<ToolCallChunkModel>),
+}
+
+#[derive(Debug)]
+pub struct ToolCallChunkModel {
+    pub id: String,
+    pub fn_name: String,
+    pub params: String,
+    pub result: String,
 }

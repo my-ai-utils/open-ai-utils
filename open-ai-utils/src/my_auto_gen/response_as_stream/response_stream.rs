@@ -1,4 +1,4 @@
-use crate::my_auto_gen::OpenAiStreamChunk;
+use crate::my_auto_gen::*;
 
 pub struct OpenAiResponseStream {
     rx: tokio::sync::mpsc::Receiver<Result<OpenAiStreamChunk, String>>,

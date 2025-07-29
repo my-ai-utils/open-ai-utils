@@ -118,6 +118,7 @@ impl NextDataErr {
 
 #[cfg(test)]
 mod tests {
+
     use crate::http_chunked_body_reader::HttpOpenAiChunkedBodyReader;
 
     #[test]

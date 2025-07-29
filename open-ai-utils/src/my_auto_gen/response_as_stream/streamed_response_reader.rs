@@ -56,3 +56,32 @@ impl StreamedResponseReader {
         Some(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use serde::*;
+
+    use crate::my_auto_gen::StreamedResponseReader;
+
+    #[test]
+    fn parse_two_functions() {
+        let data = std::include_bytes!("../../../../stream_example.json");
+
+        let chunks: Vec<ChunkModel> = serde_json::from_slice(data).unwrap();
+
+        let mut body_reader = StreamedResponseReader::new();
+
+        for itm in chunks {
+            body_reader.append_data(itm.data.as_bytes());
+
+            let object = body_reader.try_get_next_chunk();
+
+            println!("{:?}", object);
+        }
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    pub struct ChunkModel {
+        pub data: String,
+    }
+}

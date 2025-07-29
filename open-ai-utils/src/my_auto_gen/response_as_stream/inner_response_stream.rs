@@ -7,7 +7,7 @@ use rust_extensions::date_time::DateTimeAsMicroseconds;
 pub struct OpenAiInnerResponseStream {
     fl_url_response: FlResponseAsStream,
     streamed_response_reader: StreamedResponseReader,
-    current_tool_call: Option<CurrentToolCall>,
+    tool_calls: Vec<ToolCallChunkHttpModel>,
     eof: bool,
 }
 
@@ -16,7 +16,7 @@ impl OpenAiInnerResponseStream {
         Self {
             fl_url_response,
             streamed_response_reader: StreamedResponseReader::new(),
-            current_tool_call: None,
+            tool_calls: vec![],
             eof: false,
         }
     }
@@ -24,7 +24,7 @@ impl OpenAiInnerResponseStream {
     pub async fn get_next_chunk(
         &mut self,
         rb: &OpenAiRequestBodyBuilder,
-    ) -> Result<Option<OpenAiStreamChunk>, String> {
+    ) -> Result<Option<OpenAiStreamHttpChunk>, String> {
         if self.eof {
             return Ok(None);
         }
@@ -55,8 +55,8 @@ impl OpenAiInnerResponseStream {
             while let Some(choice) = data.get_choice() {
                 if let Some(content) = choice.delta.content {
                     if content.len() > 0 {
-                        self.current_tool_call = None;
-                        return Ok(Some(OpenAiStreamChunk::Text(content)));
+                        self.tool_calls = vec![];
+                        return Ok(Some(OpenAiStreamHttpChunk::Text(content)));
                     }
                 }
 
@@ -64,45 +64,20 @@ impl OpenAiInnerResponseStream {
                     for tool_call in tool_calls {
                         if let Some(function) = tool_call.function {
                             if let Some(id) = function.id {
-                                match &mut self.current_tool_call {
-                                    Some(c_tc) => {
-                                        c_tc.id.push_str(id.as_str());
-                                    }
-                                    None => {
-                                        self.current_tool_call = Some(CurrentToolCall {
-                                            id: id,
-                                            arguments: Default::default(),
-                                            name: Default::default(),
-                                        })
-                                    }
-                                }
+                                self.tool_calls.push(ToolCallChunkHttpModel {
+                                    id: id,
+                                    fn_name: Default::default(),
+                                    params: Default::default(),
+                                })
                             }
                             if let Some(fn_name) = function.name {
-                                match &mut self.current_tool_call {
-                                    Some(c_tc) => {
-                                        c_tc.name.push_str(fn_name.as_str());
-                                    }
-                                    None => {
-                                        self.current_tool_call = Some(CurrentToolCall {
-                                            name: fn_name,
-                                            arguments: Default::default(),
-                                            id: Default::default(),
-                                        })
-                                    }
+                                if let Some(last) = self.tool_calls.last_mut() {
+                                    last.fn_name.push_str(fn_name.as_str());
                                 }
                             }
                             if let Some(params) = function.arguments {
-                                match &mut self.current_tool_call {
-                                    Some(c_tc) => {
-                                        c_tc.arguments.push_str(params.as_str());
-                                    }
-                                    None => {
-                                        self.current_tool_call = Some(CurrentToolCall {
-                                            id: Default::default(),
-                                            name: Default::default(),
-                                            arguments: params,
-                                        })
-                                    }
+                                if let Some(last) = self.tool_calls.last_mut() {
+                                    last.params.push_str(params.as_str());
                                 }
                             }
                         }
@@ -111,28 +86,11 @@ impl OpenAiInnerResponseStream {
             }
         }
 
-        if let Some(tool_call) = self.current_tool_call.take() {
-            return Ok(Some(OpenAiStreamChunk::ToolCall {
-                fn_name: tool_call.name,
-                params: tool_call.arguments,
-                id: tool_call.id,
-                result: String::new(),
-            }));
+        if self.tool_calls.len() > 0 {
+            let tool_calls = std::mem::take(&mut self.tool_calls);
+            return Ok(Some(OpenAiStreamHttpChunk::ToolCalls(tool_calls)));
         }
 
         Ok(None)
     }
-}
-
-/*
-async fn read_fl_url_stream(
-    mut fl_url_response: FlResponseAsStream,
-    sender: tokio::sync::mpsc::Sender<Result<OpenAiStreamChunk, String>>,
-) {
-}
- */
-pub struct CurrentToolCall {
-    pub name: String,
-    pub arguments: String,
-    pub id: String,
 }
