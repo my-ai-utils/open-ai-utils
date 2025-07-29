@@ -35,7 +35,6 @@ pub struct ToolCallsJsonModel {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ToolCallFuncDescriptionJsonModel {
-    pub id: Option<String>,
     pub name: Option<String>,
     pub arguments: Option<String>,
 }

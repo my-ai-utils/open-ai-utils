@@ -68,14 +68,15 @@ impl OpenAiInnerResponseStream {
 
                 if let Some(tool_calls) = choice.delta.tool_calls {
                     for tool_call in tool_calls {
+                        if let Some(id) = tool_call.id {
+                            self.tool_calls.push(ToolCallChunkHttpModel {
+                                id: id,
+                                fn_name: Default::default(),
+                                params: Default::default(),
+                            });
+                        }
+
                         if let Some(function) = tool_call.function {
-                            if let Some(id) = function.id {
-                                self.tool_calls.push(ToolCallChunkHttpModel {
-                                    id: id,
-                                    fn_name: Default::default(),
-                                    params: Default::default(),
-                                })
-                            }
                             if let Some(fn_name) = function.name {
                                 if let Some(last) = self.tool_calls.last_mut() {
                                     last.fn_name.push_str(fn_name.as_str());
