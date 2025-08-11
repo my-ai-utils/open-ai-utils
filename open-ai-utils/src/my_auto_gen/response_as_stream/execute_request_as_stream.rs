@@ -36,13 +36,13 @@ pub async fn execute_request_as_stream(
             let body = response.receive_body().await.unwrap();
             println!("OpenAI status code: {}", status_code);
             println!("{:?}", std::str::from_utf8(body.as_slice()));
-            let err = format!("Status code: {}", status_code);
 
             let body_str = std::str::from_utf8(body.as_slice()).unwrap_or("Body is not UTF-8");
 
+            let err = format!("Status code: {}. Body: {}", status_code, body_str);
             logger.write_error(
                 "execute_open_ai_request_as_stream".to_string(),
-                format!("{}. Body: {}", err, body_str),
+                err.to_string(),
                 create_logs_context(&settings, None),
             );
             let _ = sender.send(Err(err)).await;
