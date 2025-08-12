@@ -42,7 +42,12 @@ impl OpenAiRequestBodyBuilder {
         }
     }
 
-    pub async fn add_user_message(&self, message: impl Into<StrOrString<'static>>) {
+    pub async fn add_system_message(&self, message: impl Into<String>) {
+        let mut write_access = self.inner.lock().await;
+        write_access.add_system_message(message);
+    }
+
+    pub async fn add_user_message(&self, message: impl Into<String>) {
         let mut write_access = self.inner.lock().await;
         write_access.add_user_message(message);
     }

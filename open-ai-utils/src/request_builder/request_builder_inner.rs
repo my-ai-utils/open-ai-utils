@@ -5,6 +5,7 @@ use crate::my_auto_gen::{TechRequestLogItem, TechRequestLogger, ToolCallModel};
 use super::*;
 
 const SYSTEM_ROLE: &'static str = "system";
+const USER_ROLE: &'static str = "user";
 
 const ASSISTANT_ROLE: &'static str = "assistant";
 
@@ -82,20 +83,30 @@ impl OpenAiRequestBodyBuilderInner {
         self.model.stream = Some(true);
     }
 
-    pub fn add_user_message(&mut self, message: impl Into<StrOrString<'static>>) {
+    pub fn add_system_message(&mut self, message: impl Into<String>) {
         let message = message.into();
         self.model.messages.push(OpenAiMessageModel {
-            role: "user".to_owned(),
-            content: Some(message.to_string()),
+            role: SYSTEM_ROLE.to_owned(),
+            content: Some(message),
             tool_calls: None,
             tool_call_id: None,
         });
     }
 
-    pub fn add_assistant_message(&mut self, message: String) {
+    pub fn add_user_message(&mut self, message: impl Into<String>) {
+        let message = message.into();
+        self.model.messages.push(OpenAiMessageModel {
+            role: USER_ROLE.to_owned(),
+            content: Some(message),
+            tool_calls: None,
+            tool_call_id: None,
+        });
+    }
+
+    pub fn add_assistant_message(&mut self, message: impl Into<String>) {
         self.model.messages.push(OpenAiMessageModel {
             role: ASSISTANT_ROLE.to_owned(),
-            content: Some(message),
+            content: Some(message.into()),
             tool_calls: None,
             tool_call_id: None,
         });
