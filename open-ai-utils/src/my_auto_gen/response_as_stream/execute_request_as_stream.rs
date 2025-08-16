@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
-use flurl::{FlUrl, FlUrlResponse};
+use flurl::{FlUrl, FlUrlResponse, body::FlUrlBody};
 use rust_extensions::{Logger, date_time::DateTimeAsMicroseconds};
 use tokio::sync::RwLock;
 
@@ -180,7 +180,7 @@ async fn prepare_open_ai_fl_url(
             serde_json::to_string(&model).unwrap(),
         ))
         .await;
-        let response = fl_url.post_json(&model).await;
+        let response = fl_url.post(FlUrlBody::as_json(&model)).await;
 
         match response {
             Ok(response) => return Ok(response),
