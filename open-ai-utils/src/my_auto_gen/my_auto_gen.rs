@@ -1,17 +1,18 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
-use flurl::FlUrl;
-use rust_extensions::{Logger, base64::IntoBase64, date_time::DateTimeAsMicroseconds};
+use rust_extensions::{Logger, date_time::DateTimeAsMicroseconds};
 use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
 use crate::{
     FunctionToolCallDescription, OpenAiRequestBodyBuilder, OtherRequestData,
     my_auto_gen::{
-        AutoGenSettings, MyAutoGenInner, OpenAiRespModel, OpenAiResponseStream,
-        RemoteToolFunctions, RemoteToolFunctionsHandler, ToolFunction, ToolFunctions,
+        AutoGenSettings, MyAutoGenInner, OpenAiResponseStream, RemoteToolFunctions,
+        RemoteToolFunctionsHandler, ToolFunction, ToolFunctions,
     },
 };
+
+use super::argentic_response::*;
 
 pub struct MyAutoGen {
     inner: Arc<RwLock<MyAutoGenInner>>,
@@ -79,7 +80,7 @@ impl MyAutoGen {
         rb: &OpenAiRequestBodyBuilder,
         ctx: &str,
         other_request_data: OtherRequestData,
-    ) -> Result<Vec<ToolCallsResult>, String> {
+    ) -> Result<Vec<super::argentic_response::ToolCallsResult>, String> {
         {
             let inner = self.inner.read().await;
             inner.populate_request_builder(rb).await;
@@ -88,9 +89,13 @@ impl MyAutoGen {
         let mut tool_calls_result: Vec<ToolCallsResult> = Vec::new();
 
         loop {
-            let request = execute_request(settings, rb, &other_request_data)
-                .await
-                .map_err(|itm| itm.to_string());
+            let request = super::argentic_response::execute_fl_url_request(
+                settings.unwrap_as_http(),
+                rb,
+                &other_request_data,
+            )
+            .await
+            .map_err(|itm| itm.to_string());
 
             let (model, response_body) = match request {
                 Ok(resp) => resp,
@@ -161,72 +166,4 @@ impl MyAutoGen {
 
         Ok(result)
     }
-}
-
-async fn execute_request(
-    settings: &AutoGenSettings,
-    rb: &OpenAiRequestBodyBuilder,
-    other_request_data: &OtherRequestData,
-) -> Result<(OpenAiRespModel, String), String> {
-    let mut fl_url = FlUrl::new(settings.url.as_str()).set_timeout(Duration::from_secs(60));
-
-    if let Some(api_key) = settings.api_key.as_ref() {
-        fl_url = fl_url.with_header("Authorization", format!("Bearer {}", api_key));
-    };
-
-    if settings.do_not_reuse_connection.unwrap_or(false) {
-        fl_url = fl_url.do_not_reuse_connection();
-    }
-
-    let model = rb.get_model(other_request_data).await;
-
-    rb.write_tech_log(super::TechRequestLogItem::new_data_as_str(
-        DateTimeAsMicroseconds::now(),
-        super::TechLogItemType::Request,
-        serde_json::to_string(&model).unwrap(),
-    ))
-    .await;
-
-    let response = fl_url
-        .post_json(&model)
-        .await
-        .map_err(|itm| itm.to_string())?;
-
-    let status_code = response.get_status_code();
-
-    if status_code != 200 {
-        let body = response.receive_body().await.unwrap();
-        println!("OpenAI status code: {}", status_code);
-        println!("{:?}", std::str::from_utf8(body.as_slice()));
-        return Err(format!("Status code: {}", status_code));
-    }
-
-    let body = response
-        .receive_body()
-        .await
-        .map_err(|itm| itm.to_string())?;
-
-    let model: Result<OpenAiRespModel, _> = serde_json::from_slice(body.as_slice());
-
-    match model {
-        Ok(model) => {
-            let body = match std::str::from_utf8(body.as_slice()) {
-                Ok(body_as_str) => body_as_str.to_string(),
-                Err(_) => body.as_slice().into_base64(),
-            };
-
-            return Ok((model, body));
-        }
-        Err(err) => {
-            println!("Can not deserialize JsonModel. Err: `{}`", err);
-            panic!("Can not deserialize JsonModel. Err: `{}`", err);
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ToolCallsResult {
-    pub fn_name: String,
-    pub request_data: String,
-    pub result_data: String,
 }

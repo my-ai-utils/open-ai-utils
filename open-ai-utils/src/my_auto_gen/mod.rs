@@ -19,3 +19,6 @@ mod response_as_stream;
 pub use response_as_stream::*;
 mod exec_tool_call;
 pub use exec_tool_call::*;
+
+mod argentic_response;
+pub use argentic_response::*;

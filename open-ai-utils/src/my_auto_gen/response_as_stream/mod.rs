@@ -10,3 +10,5 @@ mod response_stream;
 pub use response_stream::*;
 mod execute_request_as_stream;
 pub use execute_request_as_stream::*;
+mod open_ai_network_stream;
+pub use open_ai_network_stream::*;

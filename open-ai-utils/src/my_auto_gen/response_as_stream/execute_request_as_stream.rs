@@ -19,37 +19,27 @@ pub async fn execute_request_as_stream(
 ) {
     let mut text_result = String::new();
     loop {
-        let response =
-            match prepare_open_ai_streamed_request(&settings, &rb, &logger, &other_request_data)
+        let mut response = match &settings {
+            AutoGenSettings::HttpRequest(settings_model) => {
+                match prepare_open_ai_fl_url_streamed_request(
+                    &settings_model,
+                    &rb,
+                    &logger,
+                    &other_request_data,
+                )
                 .await
-            {
-                Ok(response) => response,
-                Err(err) => {
-                    let _ = sender.send(Err(err)).await;
-                    return;
+                {
+                    Ok(response) => response,
+                    Err(err) => {
+                        let _ = sender.send(Err(err)).await;
+                        return;
+                    }
                 }
-            };
-
-        let status_code = response.get_status_code();
-
-        if status_code != 200 {
-            let body = response.receive_body().await.unwrap();
-            println!("OpenAI status code: {}", status_code);
-            println!("{:?}", std::str::from_utf8(body.as_slice()));
-
-            let body_str = std::str::from_utf8(body.as_slice()).unwrap_or("Body is not UTF-8");
-
-            let err = format!("Status code: {}. Body: {}", status_code, body_str);
-            logger.write_error(
-                "execute_open_ai_request_as_stream".to_string(),
-                err.to_string(),
-                create_logs_context(&settings, None),
-            );
-            let _ = sender.send(Err(err)).await;
-            return;
-        }
-
-        let mut response = OpenAiInnerResponseStream::new(response.get_body_as_stream());
+            }
+            AutoGenSettings::Mock(items) => {
+                OpenAiInnerResponseStream::new(OpenAiNetworkStream::Mock(items.clone()))
+            }
+        };
 
         let mut tool_calls_to_execute = vec![];
 
@@ -108,10 +98,16 @@ pub async fn execute_request_as_stream(
                 let _ = sender.send(Ok(OpenAiStreamChunk::ToolCalls(to_send))).await;
             }
             Err(err) => {
+                let ctx = match &settings {
+                    AutoGenSettings::HttpRequest(settings_model) => {
+                        create_logs_context(&settings_model, None)
+                    }
+                    AutoGenSettings::Mock(_) => None,
+                };
                 logger.write_error(
                     "execute_open_ai_request_as_stream".to_string(),
                     err.to_string(),
-                    create_logs_context(&settings, None),
+                    ctx,
                 );
                 let _ = sender.send(Err(err)).await;
                 return;
@@ -120,8 +116,39 @@ pub async fn execute_request_as_stream(
     }
 }
 
-async fn prepare_open_ai_streamed_request(
-    settings: &AutoGenSettings,
+async fn prepare_open_ai_fl_url_streamed_request(
+    settings: &HttpRequestSettingsModel,
+    rb: &OpenAiRequestBodyBuilder,
+    logger: &Arc<dyn Logger + Send + Sync>,
+    other_request_data: &OtherRequestData,
+) -> Result<OpenAiInnerResponseStream, String> {
+    let response = prepare_open_ai_fl_url(settings, rb, logger, other_request_data).await?;
+    let status_code = response.get_status_code();
+
+    if status_code != 200 {
+        let body = response.receive_body().await.unwrap();
+        println!("OpenAI status code: {}", status_code);
+        println!("{:?}", std::str::from_utf8(body.as_slice()));
+
+        let body_str = std::str::from_utf8(body.as_slice()).unwrap_or("Body is not UTF-8");
+
+        let err = format!("Status code: {}. Body: {}", status_code, body_str);
+        logger.write_error(
+            "execute_open_ai_request_as_stream".to_string(),
+            err.to_string(),
+            create_logs_context(&settings, None),
+        );
+        return Err(err);
+    }
+
+    let response =
+        OpenAiInnerResponseStream::new(OpenAiNetworkStream::Http(response.get_body_as_stream()));
+
+    Ok(response)
+}
+
+async fn prepare_open_ai_fl_url(
+    settings: &HttpRequestSettingsModel,
     rb: &OpenAiRequestBodyBuilder,
     logger: &Arc<dyn Logger + Send + Sync>,
     other_request_data: &OtherRequestData,
@@ -176,7 +203,7 @@ async fn prepare_open_ai_streamed_request(
 }
 
 fn create_logs_context(
-    settings: &AutoGenSettings,
+    settings: &HttpRequestSettingsModel,
     attempt: Option<usize>,
 ) -> Option<HashMap<String, String>> {
     let mut ctx = HashMap::new();
