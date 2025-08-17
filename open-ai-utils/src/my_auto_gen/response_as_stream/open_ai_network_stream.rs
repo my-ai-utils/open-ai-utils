@@ -15,7 +15,7 @@ impl OpenAiNetworkStream {
                 .await
                 .map_err(|err| format!("{:?}", err)),
             OpenAiNetworkStream::Mock(items) => {
-                if items.len() > 0 {
+                if items.len() == 0 {
                     return Ok(None);
                 }
 
