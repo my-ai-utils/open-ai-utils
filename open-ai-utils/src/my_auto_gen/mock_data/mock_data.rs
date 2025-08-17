@@ -32,7 +32,17 @@ use crate::{
 async fn test() {
     let settings = super::get_mock_items();
 
-    let network_stream = OpenAiNetworkStream::Mock(Arc::new(Mutex::new(settings)));
+    let data = Arc::new(Mutex::new(settings));
+
+    let network_stream = OpenAiNetworkStream::Mock(data.clone());
+    let mut stream = OpenAiInnerResponseStream::new(network_stream);
+
+    let rb = OpenAiRequestBodyBuilder::new(crate::LlmModel::Gpt4o);
+    while let Some(chunk) = stream.get_next_chunk(&rb).await.unwrap() {
+        println!("{:?}", chunk);
+    }
+
+    let network_stream = OpenAiNetworkStream::Mock(data.clone());
     let mut stream = OpenAiInnerResponseStream::new(network_stream);
 
     let rb = OpenAiRequestBodyBuilder::new(crate::LlmModel::Gpt4o);

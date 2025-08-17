@@ -54,6 +54,7 @@ impl OpenAiInnerResponseStream {
             let mut data = match data {
                 StreamReaderResult::Data(data) => data,
                 StreamReaderResult::Done => {
+                    self.eof = true;
                     if self.tool_calls.len() > 0 {
                         let tool_calls = std::mem::take(&mut self.tool_calls);
                         return Ok(Some(OpenAiStreamHttpChunk::ToolCalls(tool_calls)));
