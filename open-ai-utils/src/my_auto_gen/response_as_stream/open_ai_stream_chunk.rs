@@ -2,7 +2,6 @@
 pub enum OpenAiStreamHttpChunk {
     Text(String),
     ToolCalls(Vec<ToolCallChunkHttpModel>),
-    Done,
 }
 
 #[derive(Debug)]

@@ -8,7 +8,6 @@ pub struct OpenAiInnerResponseStream {
     streamed_response_reader: StreamedResponseReader,
     tool_calls: Vec<ToolCallChunkHttpModel>,
     eof: bool,
-    done: bool,
 }
 
 impl OpenAiInnerResponseStream {
@@ -18,7 +17,6 @@ impl OpenAiInnerResponseStream {
             streamed_response_reader: StreamedResponseReader::new(),
             tool_calls: vec![],
             eof: false,
-            done: false,
         }
     }
 
@@ -27,11 +25,7 @@ impl OpenAiInnerResponseStream {
         rb: &OpenAiRequestBodyBuilder,
     ) -> Result<Option<OpenAiStreamHttpChunk>, String> {
         if self.eof {
-            if self.done {
-                return Ok(Some(OpenAiStreamHttpChunk::Done));
-            } else {
-                return Ok(None);
-            }
+            return Ok(None);
         }
 
         loop {
@@ -61,13 +55,13 @@ impl OpenAiInnerResponseStream {
             let mut data = match data {
                 StreamReaderResult::Data(data) => data,
                 StreamReaderResult::Done => {
-                    self.done = true;
+                    self.eof = true;
                     if self.tool_calls.len() > 0 {
                         let tool_calls = std::mem::take(&mut self.tool_calls);
                         return Ok(Some(OpenAiStreamHttpChunk::ToolCalls(tool_calls)));
                     }
 
-                    return Ok(Some(OpenAiStreamHttpChunk::Done));
+                    return Ok(None);
                 }
             };
 

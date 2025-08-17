@@ -20,9 +20,9 @@ pub async fn execute_request_as_stream(
     let mut text_result = String::new();
 
     let mut mock_items = None;
-    let mut done = false;
 
-    while !done {
+    loop {
+        let mut had_fn_called = false;
         let mut response = match &settings {
             AutoGenSettings::HttpRequest(settings_model) => {
                 match prepare_open_ai_fl_url_streamed_request(
@@ -52,15 +52,12 @@ pub async fn execute_request_as_stream(
 
         while let Some(next_chunk) = response.get_next_chunk(&rb).await.unwrap() {
             match next_chunk {
-                OpenAiStreamHttpChunk::Done => {
-                    done = true;
-                    break;
-                }
                 OpenAiStreamHttpChunk::Text(text) => {
                     text_result.push_str(&text);
                     let _ = sender.send(Ok(OpenAiStreamChunk::Text(text))).await;
                 }
                 OpenAiStreamHttpChunk::ToolCalls(tool_calls) => {
+                    had_fn_called = true;
                     if text_result.len() > 0 {
                         rb.add_assistant_message(std::mem::take(&mut text_result))
                             .await;
@@ -117,6 +114,10 @@ pub async fn execute_request_as_stream(
                     }
                 }
             }
+        }
+
+        if !had_fn_called {
+            break;
         }
     }
 }
