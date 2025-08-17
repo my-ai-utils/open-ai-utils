@@ -34,6 +34,7 @@ impl OpenAiInnerResponseStream {
 
                 if next_chunk_from_http.is_none() {
                     self.eof = true;
+                    println!("AI Stream ended");
                     break;
                 }
 
