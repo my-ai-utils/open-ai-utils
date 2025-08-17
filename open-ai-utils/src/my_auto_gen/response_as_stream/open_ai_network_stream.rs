@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use flurl::FlResponseAsStream;
 use tokio::sync::Mutex;
@@ -21,9 +21,12 @@ impl OpenAiNetworkStream {
                     return Ok(None);
                 }
 
-                tokio::time::sleep(Duration::from_millis(100)).await;
+                #[cfg(not(test))]
+                tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
                 let result = items.remove(0);
+
+                //       println!("Remains {}. Mock chunk: {}", items.len(), result);
 
                 Ok(Some(result.into_bytes()))
             }

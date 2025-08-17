@@ -4,6 +4,12 @@ use crate::my_auto_gen::StreamJsonModel;
 
 const DATA_PREFIX: &'static [u8] = b"data: ";
 const DATA_SUFFIX: &'static [u8] = b"\n\n";
+
+pub enum StreamReaderResult {
+    Data(StreamJsonModel),
+    Done,
+}
+
 pub struct StreamedResponseReader {
     data: Vec<u8>,
 }
@@ -16,7 +22,7 @@ impl StreamedResponseReader {
         self.data.extend_from_slice(delta);
     }
 
-    pub fn try_get_next_chunk(&mut self) -> Option<StreamJsonModel> {
+    pub fn try_get_next_chunk(&mut self) -> Option<StreamReaderResult> {
         if self.data.len() < DATA_PREFIX.len() + DATA_SUFFIX.len() {
             return None;
         }
@@ -26,7 +32,8 @@ impl StreamedResponseReader {
         let chunk = &self.data[DATA_PREFIX.len()..end_pos];
 
         if chunk.ends_with(b"[DONE]") {
-            return None;
+            self.data.clear();
+            return Some(StreamReaderResult::Done);
         }
 
         //  println!("`{}`", std::str::from_utf8(chunk).unwrap());
@@ -53,6 +60,6 @@ impl StreamedResponseReader {
 
         // let sub_chunk = &self.data[DATA_PREFIX.len()..];
 
-        Some(result)
+        Some(StreamReaderResult::Data(result))
     }
 }

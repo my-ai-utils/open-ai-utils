@@ -22,3 +22,5 @@ pub use exec_tool_call::*;
 
 mod argentic_response;
 pub use argentic_response::*;
+#[cfg(test)]
+mod mock_data;

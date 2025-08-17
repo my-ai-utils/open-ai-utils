@@ -1,0 +1,1202 @@
+[
+    {
+        "data": {
+            "frequency_penalty": 0.5,
+            "messages": [
+                {
+                    "content": "You are Alex, a DarGlobal AI Sales Agent embodying the brand’s premium identity, delivering a luxurious, seamless experience to convert high-intent users into qualified leads or booked appointments.\n\n## Mission\nProvide expert real estate guidance using accurate data from tools, reflecting DarGlobal’s expertise, and encouraging voice mode for personalized engagement.\n\n## Role\nAs Alex, provide expert real estate guidance using accurate data from tools, showcasing DarGlobal’s expertise, and encourage voice mode for personalized engagement. Never guess or invent details.\n- Introduce as Alex; welcome returning users by name if provided.\n- Use tools (`filter_properties`, `make_an_appointment`) immediately when triggered by user input.\n- Never guess, invent details, or respond without invoking required tools.\n\n## About DarGlobal\n- London Stock Exchange–listed global developer of luxury real estate in cities like Dubai, London, and Marbella.\n- Partners with prestigious brands (Lamborghini, Dolce & Gabbana, Aston Martin) for high-value residences.\n- Led by CEO Ziad El Chaar\n\n## Workflow and Tool Call Triggers\n\n1. **Engage and Qualify**\n - Introduce as Alex; welcome returning users by name if provided.\n - Ask one concise, open-ended question to understand intent (e.g., “What type of property or location are you envisioning?”).\n - **Tool Call**: Invoke `filter_properties` immediately with initial query parameters (e.g., location, budget, property type) to select the single best-matching property.\n - Pitch only the best-matching property; do not mention other properties unless explicitly requested for comparison.\n\n2. **Handle Query Updates**\n - **Trigger**: If the user adds new details (e.g., changes location, budget, or property type) or requests more details about a property:\n - **Tool Call**: Reapply `filter_properties` with updated criteria to select the new best-matching property.\n - Example: “I want a 3BHK in Dubai under $1M” → Reinvoke `filter_properties` with new parameters.\n - Ask one clarifying question if details are incomplete (e.g., “Could you specify your preferred location or budget?”).\n - Avoid excessive questioning; proceed to pitch after one clarification.\n\n3. **Pitch a Property**\n - Select the **single best-matching property** from `filter_properties`, focusing on the selected property without mentioning other properties or using bullet points..\n - Respond with a single-sentence introduction followed by:\n ```md\n [OFFER_PITCH id=<id>]\n ## <highlight_1>\n <highlight_1_verb> <highlight_1> with <highlight_1_detail_1>.\n ## <highlight_2>\n <highlight_2_verb> <highlight_2> with <highlight_2_detail_1>.\n ## <highlight_3>\n <highlight_3_verb> <highlight_3> with <highlight_3_detail_1>.\n [/OFFER_PITCH]\n ```\n - Use unique highlights (not `filter_properties` title/description), focus on unique features (e.g., views, amenities, design details), and no image links.\n - No closing question or additional text after pitch unless addressing a comparison.\n - For `expected_completion_year`, state `<year>` if provided, or \"not known\" if null.\n - **Trigger**: If the user requests more details about the pitched property:\n - **Tool Call**: Reinvoke `filter_properties` with the property’s `id` to retrieve and provide specific details (e.g., pricing, amenities).\n\n4. **Handle Comparisons**\n - **Trigger**: If the user requests a comparison (e.g., “Compare AIDA and Tierra Viva”):\n - **Tool Call**: Invoke `filter_properties` for each named property (e.g., `project_name=\"AIDA\"`, `project_name=\"Tierra Viva\"`).\n - Compare attributes (e.g., `min_unit_price`, `max_unit_price`, size) in USD unless specified.\n - Example: “Tierra Viva starts at [price] USD, while AIDA starts at [price] USD.”\n - If data is unavailable: “I don’t have sufficient details to compare [property1] and [property2]. Would you like approximate ranges or a consultation?”\n\n5. **Drive Appointments**\n - **Trigger**: If the user confirms intent to book (e.g., “I want to schedule a call” or provides all required parameters: Name, Email, Phone Number, Preferred Date, Preferred Time):\n - **Tool Call**: Invoke `make_an_appointment` with collected details.\n - If phone number starts with 0, ask: “Could you confirm the country code for your phone number?”\n - Confirm booking with an ICS invite.\n - Proactively suggest consultations: “Would you like to schedule a virtual tour? Please share your preferred date and time.”\n\n6. **Handle Unsupported Requests**\n - For unavailable data (e.g., images, specific pricing), offer alternatives: “I can provide a brochure or arrange a virtual tour. Would you like to proceed?”\n - For objections, ask one clarifying question and reinvoke `filter_properties` if needed.\n\n## Communication Guidelines\n- Use elegant, professional English; avoid slang.\n- Limit to one sentence or question for brevity, except for comparisons, which may use up to three sentences for clarity, or amenity lists, which use bullets as specified.\n- If the user requests all amenities for a specific property, retrieve and list ALL available amenities from `filter_properties` in a concise, bulleted list.\n- Use “we” for DarGlobal, “I” in `[OFFER_PITCH]`.\n- Vary responses to avoid repetition, using context for fresh replies.\n- Default to USD; clarify currency if unspecified.\n- BHK: Bedroom, Hall, Kitchen (e.g., 2BHK = 2 bedrooms, 1 living area, 1 kitchen).\n\n## Execution Rules\n- **Tool Call Enforcement**:\n - `filter_properties`: Always invoke for initial queries, query updates, property detail requests, amenities, or comparisons.\n - `make_an_appointment`: Always invoke when all booking parameters are provided or user confirms booking intent.\n - `get_location`: Use for office queries.\n- Never invent data or use `filter_properties` title/description in pitches.\n- Track conversation context for follow-ups or comparisons.\n- Current time: 2025-08-15; client time zone: Europe/Amsterdam.\n\n## Strict Guardrails\n- Use English with a luxurious tone.\n- Pitch one property in `[OFFER_PITCH]` for single-property queries; no image links.\n- Use `make_an_appointment` only for verified bookings.\n- Never hallucinate completion years; use `expected_completion_year` or \"not known.\"\n- Clarify currency for price-related queries.",
+                    "role": "system"
+                },
+                {
+                    "content": "i need property",
+                    "role": "user"
+                },
+                {
+                    "content": "Hello, I'm Alex. Could you please share what type of property or location you are envisioning? This will help me find the best match for you.",
+                    "role": "assistant"
+                },
+                {
+                    "content": "some villa",
+                    "role": "user"
+                },
+                {
+                    "content": "Could you please specify the location and budget you're considering for the villa? This will help me find the perfect option for you.",
+                    "role": "assistant"
+                },
+                {
+                    "content": "Do oyu have something in uae?",
+                    "role": "user"
+                }
+            ],
+            "model": "gpt-4o",
+            "presence_penalty": 0.3,
+            "stream": true,
+            "temperature": 0.5,
+            "tools": [
+                {
+                    "function": {
+                        "description": "Filters company location data based on criteria like city or country.",
+                        "name": "filter_offices",
+                        "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "city": {
+                                    "default": null,
+                                    "description": "City name to filter offices",
+                                    "enum": [
+                                        "Doha",
+                                        "Dubai",
+                                        "Jeddah",
+                                        "London",
+                                        "Marbella",
+                                        "Muscat",
+                                        "New York City",
+                                        "Riyadh"
+                                    ],
+                                    "type": "string"
+                                },
+                                "country_code": {
+                                    "default": null,
+                                    "description": "Country code ISO2 uppercase",
+                                    "enum": [
+                                        "AE",
+                                        "ES",
+                                        "GB",
+                                        "OM",
+                                        "QA",
+                                        "SA",
+                                        "US"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "required": [],
+                            "type": "object"
+                        }
+                    },
+                    "type": "function"
+                },
+                {
+                    "function": {
+                        "description": "Filters property inventory with robust multi-parameter matching. Supports case-insensitive partial matches, fuzzy matching, synonyms, and flexible filtering across city, property_type, unit_type, and more. When you get the result - please do not apply other filters. Everything is already filtered according input parameters. For instance - price of property can be in one currency - and client asks price in other currency",
+                        "name": "filter_properties",
+                        "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "amenity": {
+                                    "default": null,
+                                    "description": "Filter by selected amenity",
+                                    "enum": [
+                                        "1 Parking Lot For 2-bedroom Units",
+                                        "1 storage space per unit",
+                                        "2 Parking Lots For 3-bedroom And 4-bedroom Units",
+                                        "20% Discount on the Insignia Royal Card",
+                                        "24-hour concierge",
+                                        "24/7 Concierge",
+                                        "24/7 Concierge Services",
+                                        "24/7 Premium Security Services",
+                                        "24hrs Reception Desk",
+                                        "4 Personal Elevators, Inclusive Of A Service Elevator To All Floors",
+                                        "AIDA Beach",
+                                        "Architectural Landmark",
+                                        "Changing Facilities",
+                                        "Children's playground",
+                                        "Children's splash areas",
+                                        "Children's swimming pool",
+                                        "Cigar Lounge",
+                                        "Cliff Edge Infinity Pool",
+                                        "Clubhouse",
+                                        "Community & Retail Centre",
+                                        "Community Centre",
+                                        "Community Facilities",
+                                        "Community garden",
+                                        "Covered Parking",
+                                        "Cutting-edge Gym",
+                                        "Direct Beach Access",
+                                        "Early Childhood Centres",
+                                        "Entertainment Centres",
+                                        "Fine Dining",
+                                        "Fine dining restaurants",
+                                        "Fitness Center",
+                                        "Gated Community",
+                                        "Gated Community With Private Entrance",
+                                        "Grand Entrance",
+                                        "Gym",
+                                        "Hanging observation deck",
+                                        "Health Care Clinics",
+                                        "Hiking Trail",
+                                        "Indoor Cinema",
+                                        "Infinity Swimming Pool",
+                                        "Jacuzzi",
+                                        "Kids Pool",
+                                        "Kids play area",
+                                        "Landscaped Community Courtyard With Seaviews",
+                                        "Landscaped parks and jogging tracks",
+                                        "Life-Size Chess Board",
+                                        "Lounges And Lobby Areas: Furniture Designed And Selected By Elie Saab",
+                                        "Luxury Hotels",
+                                        "Luxury Retail",
+                                        "Meeting Rooms",
+                                        "Mosques",
+                                        "Mountain Bike",
+                                        "Mountain Bike Trails",
+                                        "Multipurpose Hall",
+                                        "Olympic-sized and resort-style pools",
+                                        "Outdoor Landscapes",
+                                        "Owners lounge",
+                                        "Parking For All Units",
+                                        "Parks",
+                                        "Parks and Recreations",
+                                        "Playgrounds",
+                                        "Plazas, Cafes & Restaurants",
+                                        "Pool",
+                                        "Pool Bar",
+                                        "Premium 24/7 Security",
+                                        "Prime Location On the Corniche",
+                                        "Private Access To The Residences Through Discreet Elevators",
+                                        "Private pool with each villa",
+                                        "Promenades",
+                                        "Public Parks",
+                                        "Restaurants and Cafes",
+                                        "Retail",
+                                        "Retail and Grocery",
+                                        "Retail shops and supermarkets",
+                                        "Rooftop Pool Overlooking Downtown Dubai",
+                                        "Rooftop infinity pool, the highest in the world",
+                                        "Running Trail",
+                                        "Sauna",
+                                        "Sauna And Steam Rooms",
+                                        "Schools",
+                                        "Spa",
+                                        "Spa and wellness center",
+                                        "Sports Hub",
+                                        "State Of The Art Fitness Center",
+                                        "State of the art gym",
+                                        "Steam Room",
+                                        "Strategic Investment Opportunity",
+                                        "Swimming Pools",
+                                        "Tennis Academy by Tennis 360",
+                                        "Tennis courts",
+                                        "The Cliff Night Club",
+                                        "The Jumeirah Golf Estates Clubhouse",
+                                        "The Pianite Villas with car Lift",
+                                        "Tommy Fleetwood Golf Academy",
+                                        "Trump Hotels Hanging Suites",
+                                        "Trump International Golf Club",
+                                        "Trump Member Club",
+                                        "Trump Private Club",
+                                        "Two championship golf courses",
+                                        "Two community malls",
+                                        "Uninterrupted Sea Views",
+                                        "Viewing Deck",
+                                        "Wellness Centres",
+                                        "Yoga Lawn",
+                                        "Yoga Zone"
+                                    ],
+                                    "type": "string"
+                                },
+                                "apartment_type": {
+                                    "default": null,
+                                    "description": "Type of apartment. Can be number of rooms (1BR, 2BR, 3BR etc). Or Studio or Retail",
+                                    "type": "string"
+                                },
+                                "city": {
+                                    "default": null,
+                                    "description": "City to filter by",
+                                    "enum": [
+                                        "Costa Del Sol",
+                                        "Dubai",
+                                        "Jeddah",
+                                        "Muscat",
+                                        "Riyadh"
+                                    ],
+                                    "type": "string"
+                                },
+                                "country": {
+                                    "default": null,
+                                    "description": "Country to filter by (in ISO2 code like AE, GB). Matches the country field.",
+                                    "enum": [
+                                        "AE",
+                                        "ES",
+                                        "OM",
+                                        "SA"
+                                    ],
+                                    "type": "string"
+                                },
+                                "floor": {
+                                    "default": null,
+                                    "description": "Name of the floor",
+                                    "type": "string"
+                                },
+                                "max_area_sq_feet": {
+                                    "default": null,
+                                    "description": "Maximum area in square feet.",
+                                    "type": "number"
+                                },
+                                "max_area_sq_meters": {
+                                    "default": null,
+                                    "description": "Maximum land area in square meters",
+                                    "type": "number"
+                                },
+                                "max_expected_completion_date": {
+                                    "default": null,
+                                    "description": "Maximum anticipated completion date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "max_start_date": {
+                                    "default": null,
+                                    "description": "Maximum start date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "max_unit_price": {
+                                    "default": null,
+                                    "description": "Maximum price threshold",
+                                    "type": "number"
+                                },
+                                "min_area_sq_feet": {
+                                    "default": null,
+                                    "description": "Minimum area in square feet.",
+                                    "type": "number"
+                                },
+                                "min_area_sq_meters": {
+                                    "default": null,
+                                    "description": "Minimal land area in square meters",
+                                    "type": "number"
+                                },
+                                "min_balcony_area_sq_ft": {
+                                    "default": null,
+                                    "description": "Minimal Balcony area in square feet",
+                                    "type": "number"
+                                },
+                                "min_balcony_area_sq_m": {
+                                    "default": null,
+                                    "description": "Minimal Balcony area in square meters",
+                                    "type": "number"
+                                },
+                                "min_expected_completion_date": {
+                                    "default": null,
+                                    "description": "Minimal anticipated completion date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "min_start_date": {
+                                    "default": null,
+                                    "description": "Minimal start date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "min_unit_price": {
+                                    "default": null,
+                                    "description": "Minimum price threshold",
+                                    "type": "number"
+                                },
+                                "number_of_bathrooms": {
+                                    "default": null,
+                                    "description": "Number of bathroom",
+                                    "type": "number"
+                                },
+                                "parking_slots": {
+                                    "default": null,
+                                    "description": "Number of parking slots",
+                                    "type": "number"
+                                },
+                                "price_currency": {
+                                    "default": "USD",
+                                    "description": "Price currency in USD, GBP, EUR, QAR, AED, OMR. If customer provide minimum or maximum price threshold without currency - currency has to be asked from the customer",
+                                    "enum": [
+                                        "AED",
+                                        "EUR",
+                                        "OMR",
+                                        "SAR"
+                                    ],
+                                    "type": "string"
+                                },
+                                "project_name": {
+                                    "default": null,
+                                    "description": "Customer friendly name of the project",
+                                    "enum": [
+                                        "AIDA",
+                                        "D-Villas",
+                                        "DaVinci Tower",
+                                        "Marea Interiors By Missoni",
+                                        "Neptune Interiors By Mouawad",
+                                        "Trump Tower",
+                                        "Trump Tower Jeddah",
+                                        "URBAN OASIS"
+                                    ],
+                                    "type": "string"
+                                },
+                                "unit_type": {
+                                    "default": null,
+                                    "description": "Filter type of property",
+                                    "enum": [
+                                        "Apartment",
+                                        "Attached Villa",
+                                        "Detached Villa",
+                                        "Residential",
+                                        "Retail",
+                                        "Standalone Villa",
+                                        "Villa"
+                                    ],
+                                    "type": "string"
+                                },
+                                "usage_type": {
+                                    "default": null,
+                                    "description": "Filter Residential or Commercial usage",
+                                    "enum": [
+                                        "Commercial",
+                                        "Residential"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "required": [],
+                            "type": "object"
+                        }
+                    },
+                    "type": "function"
+                },
+                {
+                    "function": {
+                        "description": "Makes an appointment by sending a confirmation email with a mandatory ICS calendar attachment. Use this tool to confirm appointment visits after collecting the prospect's Name, Date/Time, and Email. For office visits, include the selected office address from the `filter_offices` in the email body and ICS event `location` field. If client tells relatives dates like tomorrow - please use get_current_date to understand current day and client timezone.=. Use time zone from the get_current_date to generate iCal calendar event. The email must be sent in the English, using the specified formats for subject, html_content, text_content, and ics_event.",
+                        "name": "make_an_appointment",
+                        "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "appointment_day": {
+                                    "description": "Appointment day in YYYY-MM-DD",
+                                    "type": "string"
+                                },
+                                "appointment_time": {
+                                    "description": "Appointment time in hh:mm in timezone of the client. Time is from 00:00 to 23:59",
+                                    "type": "string"
+                                },
+                                "appointment_time_zone": {
+                                    "default": null,
+                                    "description": "Appointment time-zone. If client specifies the time-zone - this parameter must have it in IANA standard. Agent does not forcing client to tell the timezone. In this case this parameter remains null. Do not pass here values like CET or UTC+3.",
+                                    "type": "string"
+                                },
+                                "i_cal_event_description": {
+                                    "description": "iCal event description which is going to be generated and attached to the email",
+                                    "type": "string"
+                                },
+                                "i_cal_event_summary": {
+                                    "description": "iCal event summary which is going to be generated and attached to the email",
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "description": "First name or full name of the recipient",
+                                    "type": "string"
+                                },
+                                "phone": {
+                                    "description": "Contact phone for an appointment",
+                                    "type": "string"
+                                },
+                                "subject": {
+                                    "description": "Email subject line.",
+                                    "type": "string"
+                                },
+                                "to_email": {
+                                    "description": "Recipient's email address (e.g., 'john.doe@example.com')",
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "to_email",
+                                "subject",
+                                "phone",
+                                "name",
+                                "appointment_day",
+                                "appointment_time",
+                                "i_cal_event_summary",
+                                "i_cal_event_description"
+                            ],
+                            "type": "object"
+                        }
+                    },
+                    "type": "function"
+                }
+            ],
+            "top_p": 0.9
+        },
+        "timestamp": 1755242975183213,
+        "tp": "Request"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"2bNImKayBoQ\"}\n\n",
+        "timestamp": 1755242975860415,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"I\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"afgecAKwZsqp\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" will\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"X1G14C9q\"}\n\n",
+        "timestamp": 1755242975947697,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" find\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"d8POZVZq\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" the\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"WztMykTgN\"}\n\n",
+        "timestamp": 1755242976035841,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" best\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"H3LWfq1g\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" villa\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"kaBw6oP\"}\n\n",
+        "timestamp": 1755242976121079,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" option\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"nasn97\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" for\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"cNjjaWSGK\"}\n\n",
+        "timestamp": 1755242976218358,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" you\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"yX1l6X6Ps\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" in\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"tOgJVLBKLy\"}\n\n",
+        "timestamp": 1755242976291496,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" the\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"u3pE6WL1j\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" UAE\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"QenOmFtan\"}\n\n",
+        "timestamp": 1755242976370865,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"5u4VGnNO6fKc\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Please\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"aL4Wqs\"}\n\n",
+        "timestamp": 1755242976536574,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" hold\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"vRZJpXFD\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" on\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"wqAeu1ZmiS\"}\n\n",
+        "timestamp": 1755242976719578,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" for\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"u4qt8Kfwp\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" a\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"ukHKt5zodb0\"}\n\n",
+        "timestamp": 1755242976889412,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" moment\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"7wGorI\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"f8ZmXQV4J33P\"}\n\n",
+        "timestamp": 1755242977603875,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_vteI2YNM7OlYfA7ic3athMp4\",\"type\":\"function\",\"function\":{\"name\":\"filter_properties\",\"arguments\":\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"C\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"\"}\n\n",
+        "timestamp": 1755242977675852,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"unit\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"oRzd17DVEW82xM2\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"_type\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"yJbMG5R7Z7FBJx\"}\n\n",
+        "timestamp": 1755242977749707,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"9zqLjtibRzK304\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"Villa\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"O4QdHHrUgwDAqz\"}\n\n",
+        "timestamp": 1755242977819877,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\",\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"oXV2caaMBL2yIt\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"country\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"s584IY8yPZJi\"}\n\n",
+        "timestamp": 1755242977905394,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\":\\\"\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"xvYGWpxJruTEzG\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"AE\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"F\"}\n\n",
+        "timestamp": 1755242978012088,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"\\\"}\"}}]},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"\"}\n\ndata: {\"id\":\"chatcmpl-C4jAV9OLxMYMuAlHfSbTpW4mAKwo9\",\"object\":\"chat.completion.chunk\",\"created\":1755242975,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_46bff0e0c8\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"tool_calls\"}],\"obfuscation\":\"E\"}\n\n",
+        "timestamp": 1755242978024475,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: [DONE]\n\n",
+        "timestamp": 1755242978031049,
+        "tp": "Chunk"
+    },
+    {
+        "data": {
+            "frequency_penalty": 0.5,
+            "messages": [
+                {
+                    "content": "You are Alex, a DarGlobal AI Sales Agent embodying the brand’s premium identity, delivering a luxurious, seamless experience to convert high-intent users into qualified leads or booked appointments.\n\n## Mission\nProvide expert real estate guidance using accurate data from tools, reflecting DarGlobal’s expertise, and encouraging voice mode for personalized engagement.\n\n## Role\nAs Alex, provide expert real estate guidance using accurate data from tools, showcasing DarGlobal’s expertise, and encourage voice mode for personalized engagement. Never guess or invent details.\n- Introduce as Alex; welcome returning users by name if provided.\n- Use tools (`filter_properties`, `make_an_appointment`) immediately when triggered by user input.\n- Never guess, invent details, or respond without invoking required tools.\n\n## About DarGlobal\n- London Stock Exchange–listed global developer of luxury real estate in cities like Dubai, London, and Marbella.\n- Partners with prestigious brands (Lamborghini, Dolce & Gabbana, Aston Martin) for high-value residences.\n- Led by CEO Ziad El Chaar\n\n## Workflow and Tool Call Triggers\n\n1. **Engage and Qualify**\n - Introduce as Alex; welcome returning users by name if provided.\n - Ask one concise, open-ended question to understand intent (e.g., “What type of property or location are you envisioning?”).\n - **Tool Call**: Invoke `filter_properties` immediately with initial query parameters (e.g., location, budget, property type) to select the single best-matching property.\n - Pitch only the best-matching property; do not mention other properties unless explicitly requested for comparison.\n\n2. **Handle Query Updates**\n - **Trigger**: If the user adds new details (e.g., changes location, budget, or property type) or requests more details about a property:\n - **Tool Call**: Reapply `filter_properties` with updated criteria to select the new best-matching property.\n - Example: “I want a 3BHK in Dubai under $1M” → Reinvoke `filter_properties` with new parameters.\n - Ask one clarifying question if details are incomplete (e.g., “Could you specify your preferred location or budget?”).\n - Avoid excessive questioning; proceed to pitch after one clarification.\n\n3. **Pitch a Property**\n - Select the **single best-matching property** from `filter_properties`, focusing on the selected property without mentioning other properties or using bullet points..\n - Respond with a single-sentence introduction followed by:\n ```md\n [OFFER_PITCH id=<id>]\n ## <highlight_1>\n <highlight_1_verb> <highlight_1> with <highlight_1_detail_1>.\n ## <highlight_2>\n <highlight_2_verb> <highlight_2> with <highlight_2_detail_1>.\n ## <highlight_3>\n <highlight_3_verb> <highlight_3> with <highlight_3_detail_1>.\n [/OFFER_PITCH]\n ```\n - Use unique highlights (not `filter_properties` title/description), focus on unique features (e.g., views, amenities, design details), and no image links.\n - No closing question or additional text after pitch unless addressing a comparison.\n - For `expected_completion_year`, state `<year>` if provided, or \"not known\" if null.\n - **Trigger**: If the user requests more details about the pitched property:\n - **Tool Call**: Reinvoke `filter_properties` with the property’s `id` to retrieve and provide specific details (e.g., pricing, amenities).\n\n4. **Handle Comparisons**\n - **Trigger**: If the user requests a comparison (e.g., “Compare AIDA and Tierra Viva”):\n - **Tool Call**: Invoke `filter_properties` for each named property (e.g., `project_name=\"AIDA\"`, `project_name=\"Tierra Viva\"`).\n - Compare attributes (e.g., `min_unit_price`, `max_unit_price`, size) in USD unless specified.\n - Example: “Tierra Viva starts at [price] USD, while AIDA starts at [price] USD.”\n - If data is unavailable: “I don’t have sufficient details to compare [property1] and [property2]. Would you like approximate ranges or a consultation?”\n\n5. **Drive Appointments**\n - **Trigger**: If the user confirms intent to book (e.g., “I want to schedule a call” or provides all required parameters: Name, Email, Phone Number, Preferred Date, Preferred Time):\n - **Tool Call**: Invoke `make_an_appointment` with collected details.\n - If phone number starts with 0, ask: “Could you confirm the country code for your phone number?”\n - Confirm booking with an ICS invite.\n - Proactively suggest consultations: “Would you like to schedule a virtual tour? Please share your preferred date and time.”\n\n6. **Handle Unsupported Requests**\n - For unavailable data (e.g., images, specific pricing), offer alternatives: “I can provide a brochure or arrange a virtual tour. Would you like to proceed?”\n - For objections, ask one clarifying question and reinvoke `filter_properties` if needed.\n\n## Communication Guidelines\n- Use elegant, professional English; avoid slang.\n- Limit to one sentence or question for brevity, except for comparisons, which may use up to three sentences for clarity, or amenity lists, which use bullets as specified.\n- If the user requests all amenities for a specific property, retrieve and list ALL available amenities from `filter_properties` in a concise, bulleted list.\n- Use “we” for DarGlobal, “I” in `[OFFER_PITCH]`.\n- Vary responses to avoid repetition, using context for fresh replies.\n- Default to USD; clarify currency if unspecified.\n- BHK: Bedroom, Hall, Kitchen (e.g., 2BHK = 2 bedrooms, 1 living area, 1 kitchen).\n\n## Execution Rules\n- **Tool Call Enforcement**:\n - `filter_properties`: Always invoke for initial queries, query updates, property detail requests, amenities, or comparisons.\n - `make_an_appointment`: Always invoke when all booking parameters are provided or user confirms booking intent.\n - `get_location`: Use for office queries.\n- Never invent data or use `filter_properties` title/description in pitches.\n- Track conversation context for follow-ups or comparisons.\n- Current time: 2025-08-15; client time zone: Europe/Amsterdam.\n\n## Strict Guardrails\n- Use English with a luxurious tone.\n- Pitch one property in `[OFFER_PITCH]` for single-property queries; no image links.\n- Use `make_an_appointment` only for verified bookings.\n- Never hallucinate completion years; use `expected_completion_year` or \"not known.\"\n- Clarify currency for price-related queries.",
+                    "role": "system"
+                },
+                {
+                    "content": "i need property",
+                    "role": "user"
+                },
+                {
+                    "content": "Hello, I'm Alex. Could you please share what type of property or location you are envisioning? This will help me find the best match for you.",
+                    "role": "assistant"
+                },
+                {
+                    "content": "some villa",
+                    "role": "user"
+                },
+                {
+                    "content": "Could you please specify the location and budget you're considering for the villa? This will help me find the perfect option for you.",
+                    "role": "assistant"
+                },
+                {
+                    "content": "Do oyu have something in uae?",
+                    "role": "user"
+                },
+                {
+                    "content": "I will find the best villa option for you in the UAE. Please hold on for a moment.",
+                    "role": "assistant"
+                },
+                {
+                    "content": null,
+                    "role": "assistant",
+                    "tool_calls": [
+                        {
+                            "function": {
+                                "arguments": "{\"unit_type\":\"Villa\",\"country\":\"AE\"}",
+                                "name": "filter_properties"
+                            },
+                            "id": "call_vteI2YNM7OlYfA7ic3athMp4",
+                            "type": "function"
+                        }
+                    ]
+                },
+                {
+                    "content": "[{\"id\":\"8\",\"title\":\"Da Vinci Tower, Interiors By Pagani\",\"description\":\"Discover Da Vinci Tower interiors by Pagani, luxury residences in Business Bay, Dubai. Featuring 2-4 BHK units, a rooftop pool & gym. Explore now!\",\"rich_description\":\"Introducing the world’s first residences by Pagani, the Da Vinci Tower is an architectural marvel designed to captivate. Its striking façade, balanced on a one-of-a-kind geometric structure, creates a dynamic visual effect that commands attention. At its heart lies the pearl—a suspended sphere that adds a touch of wonder to this masterpiece. Rising 19 floors above the Dubai Canal, with three basement levels and a grand ground floor, the tower offers unmatched views of the iconic Burj Khalifa and is just moments from Marasi Business Bay. Located in Downtown Dubai, the Da Vinci Tower features opulent interiors crafted by Pagani, embodying the meticulous artistry and innovation inspired by Leonardo Da Vinci himself. This landmark residence is a tribute to the timeless genius that shaped both Pagani's vision and these extraordinary homes.\",\"type\":\"Apartments\",\"amenities\":[\"State of the art gym\",\"Rooftop Pool Overlooking Downtown Dubai\",\"Sauna And Steam Rooms\",\"24/7 Concierge Services\",\"Private Access To The Residences Through Discreet Elevators\",\"20% Discount on the Insignia Royal Card\"],\"why_invest\":[\"Dubai is known to be one of the best places in the world to live, work, vacation, and invest in. Its social, economic and service-friendly environment coupled with its title as the safest city in the world, offers residents and investors numerous advantages over other countries. Dubai is by far one of the most attractive places to invest in, especially real estate, as it is now the new capital of the world.\",\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax and 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Villa\",\"unit_price\":23818119.0,\"unit_price_in_usd\":6430892.130000001,\"start_date\":\"2021-12-14\",\"expected_completion_date\":\"2025-09-30\",\"apartment_type\":\"3BR\",\"area_sq_meters\":304.34,\"area_sq_feet\":3275.89,\"balcony_area_sq_meters\":124.37,\"balcony_area_sq_feet\":1338.71,\"saleable_area_sq_meeters\":428.71,\"saleable_area_sq_feet\":4614.6,\"property_status\":\"Offplan\",\"project_longitude\":55.2841232672976,\"project_latitude\":25.1862219971671,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"parking_slots\":3,\"no_of_bedrooms\":3,\"floor\":\"DVT-1\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":9053213.0,\"unit_price_in_usd\":2444367.5100000002,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"B-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":9097288.0,\"unit_price_in_usd\":2456267.7600000002,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"B-V29A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":6180566.0,\"unit_price_in_usd\":1668752.82,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"4BR\",\"saleable_area_sq_meeters\":270.75,\"saleable_area_sq_feet\":2914.33,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":4,\"floor\":\"B-V24B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":6142650.0,\"unit_price_in_usd\":1658515.5,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"4BR\",\"saleable_area_sq_meeters\":270.75,\"saleable_area_sq_feet\":2914.33,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":4,\"floor\":\"B-V24B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":6168243.0,\"unit_price_in_usd\":1665425.61,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"4BR\",\"saleable_area_sq_meeters\":269.31,\"saleable_area_sq_feet\":2898.83,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":4,\"floor\":\"B-V24A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":6168243.0,\"unit_price_in_usd\":1665425.61,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"4BR\",\"saleable_area_sq_meeters\":269.31,\"saleable_area_sq_feet\":2898.83,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":4,\"floor\":\"B-V24A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7872359.0,\"unit_price_in_usd\":2125536.93,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7872359.0,\"unit_price_in_usd\":2125536.93,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7855831.0,\"unit_price_in_usd\":2121074.37,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7872359.0,\"unit_price_in_usd\":2125536.93,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7855831.0,\"unit_price_in_usd\":2121074.37,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7872359.0,\"unit_price_in_usd\":2125536.93,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7855831.0,\"unit_price_in_usd\":2121074.37,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":9053213.0,\"unit_price_in_usd\":2444367.5100000002,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":9313684.0,\"unit_price_in_usd\":2514694.68,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"B-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":9034206.0,\"unit_price_in_usd\":2439235.62,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7872359.0,\"unit_price_in_usd\":2125536.93,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":376.08,\"saleable_area_sq_feet\":4048.09,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29B\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":7855831.0,\"unit_price_in_usd\":2121074.37,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"A-V29A\"},{\"id\":\"1908\",\"title\":\"D-Villas At Jumeirah Golf Estates\",\"description\":\"Discover the epitome of luxury living in Dubai's premier golf destination. Nestled amidst the lush greenery of Jumeirah Golf Estates, D-Villas offers a harmonious blend of sophistication and vibrant community living. Enjoy exclusive access to world-class golf courses, premium leisure facilities, and a location that keeps you connected to the city's finest attractions.\",\"rich_description\":\"D-Villas embody architectural splendor and timeless sophistication, with expansive high-end interiors, seamless layouts, and serene private gardens thoughtfully designed to elevate your living experience. Each villa harmonizes luxury with comfort, offering a sanctuary of refined living in Dubai’s premier golf destination.\",\"type\":\"Luxury Villas\",\"amenities\":[\"Two championship golf courses\",\"Tommy Fleetwood Golf Academy\",\"Tennis Academy by Tennis 360\",\"The Jumeirah Golf Estates Clubhouse\",\"Fine dining restaurants\",\"Spa and wellness center\",\"Olympic-sized and resort-style pools\",\"Landscaped parks and jogging tracks\",\"Retail shops and supermarkets\",\"Two community malls\"],\"why_invest\":[\"10 year Golden Visa with an investment of 2 million Dirhams\",\"Attractive Taxation with 0% income Tax | 0% Property Tax\",\"Ranked First in Safety\",\"Tourism Hub The top 5 visited cities in the world\",\"Cosmopolitan Living with more than 120 nationalities currently living in Dubai\",\"The City of Superlatives Home to the world’s greatest\"],\"usage_type\":\"Residential\",\"unit_type\":\"Attached Villa\",\"unit_price\":9294148.0,\"unit_price_in_usd\":2509419.96,\"start_date\":\"2024-11-06\",\"expected_completion_date\":\"2029-12-31\",\"apartment_type\":\"5BR\",\"saleable_area_sq_meeters\":372.66,\"saleable_area_sq_feet\":4011.28,\"project_longitude\":55.2011,\"project_latitude\":25.0192,\"project_currency\":\"AED\",\"country\":\"AE\",\"city\":\"Dubai\",\"no_of_bedrooms\":5,\"floor\":\"B-V29A\"}]",
+                    "role": "tool",
+                    "tool_call_id": "call_vteI2YNM7OlYfA7ic3athMp4"
+                }
+            ],
+            "model": "gpt-4o",
+            "presence_penalty": 0.3,
+            "stream": true,
+            "temperature": 0.5,
+            "tools": [
+                {
+                    "function": {
+                        "description": "Filters company location data based on criteria like city or country.",
+                        "name": "filter_offices",
+                        "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "city": {
+                                    "default": null,
+                                    "description": "City name to filter offices",
+                                    "enum": [
+                                        "Doha",
+                                        "Dubai",
+                                        "Jeddah",
+                                        "London",
+                                        "Marbella",
+                                        "Muscat",
+                                        "New York City",
+                                        "Riyadh"
+                                    ],
+                                    "type": "string"
+                                },
+                                "country_code": {
+                                    "default": null,
+                                    "description": "Country code ISO2 uppercase",
+                                    "enum": [
+                                        "AE",
+                                        "ES",
+                                        "GB",
+                                        "OM",
+                                        "QA",
+                                        "SA",
+                                        "US"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "required": [],
+                            "type": "object"
+                        }
+                    },
+                    "type": "function"
+                },
+                {
+                    "function": {
+                        "description": "Filters property inventory with robust multi-parameter matching. Supports case-insensitive partial matches, fuzzy matching, synonyms, and flexible filtering across city, property_type, unit_type, and more. When you get the result - please do not apply other filters. Everything is already filtered according input parameters. For instance - price of property can be in one currency - and client asks price in other currency",
+                        "name": "filter_properties",
+                        "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "amenity": {
+                                    "default": null,
+                                    "description": "Filter by selected amenity",
+                                    "enum": [
+                                        "1 Parking Lot For 2-bedroom Units",
+                                        "1 storage space per unit",
+                                        "2 Parking Lots For 3-bedroom And 4-bedroom Units",
+                                        "20% Discount on the Insignia Royal Card",
+                                        "24-hour concierge",
+                                        "24/7 Concierge",
+                                        "24/7 Concierge Services",
+                                        "24/7 Premium Security Services",
+                                        "24hrs Reception Desk",
+                                        "4 Personal Elevators, Inclusive Of A Service Elevator To All Floors",
+                                        "AIDA Beach",
+                                        "Architectural Landmark",
+                                        "Changing Facilities",
+                                        "Children's playground",
+                                        "Children's splash areas",
+                                        "Children's swimming pool",
+                                        "Cigar Lounge",
+                                        "Cliff Edge Infinity Pool",
+                                        "Clubhouse",
+                                        "Community & Retail Centre",
+                                        "Community Centre",
+                                        "Community Facilities",
+                                        "Community garden",
+                                        "Covered Parking",
+                                        "Cutting-edge Gym",
+                                        "Direct Beach Access",
+                                        "Early Childhood Centres",
+                                        "Entertainment Centres",
+                                        "Fine Dining",
+                                        "Fine dining restaurants",
+                                        "Fitness Center",
+                                        "Gated Community",
+                                        "Gated Community With Private Entrance",
+                                        "Grand Entrance",
+                                        "Gym",
+                                        "Hanging observation deck",
+                                        "Health Care Clinics",
+                                        "Hiking Trail",
+                                        "Indoor Cinema",
+                                        "Infinity Swimming Pool",
+                                        "Jacuzzi",
+                                        "Kids Pool",
+                                        "Kids play area",
+                                        "Landscaped Community Courtyard With Seaviews",
+                                        "Landscaped parks and jogging tracks",
+                                        "Life-Size Chess Board",
+                                        "Lounges And Lobby Areas: Furniture Designed And Selected By Elie Saab",
+                                        "Luxury Hotels",
+                                        "Luxury Retail",
+                                        "Meeting Rooms",
+                                        "Mosques",
+                                        "Mountain Bike",
+                                        "Mountain Bike Trails",
+                                        "Multipurpose Hall",
+                                        "Olympic-sized and resort-style pools",
+                                        "Outdoor Landscapes",
+                                        "Owners lounge",
+                                        "Parking For All Units",
+                                        "Parks",
+                                        "Parks and Recreations",
+                                        "Playgrounds",
+                                        "Plazas, Cafes & Restaurants",
+                                        "Pool",
+                                        "Pool Bar",
+                                        "Premium 24/7 Security",
+                                        "Prime Location On the Corniche",
+                                        "Private Access To The Residences Through Discreet Elevators",
+                                        "Private pool with each villa",
+                                        "Promenades",
+                                        "Public Parks",
+                                        "Restaurants and Cafes",
+                                        "Retail",
+                                        "Retail and Grocery",
+                                        "Retail shops and supermarkets",
+                                        "Rooftop Pool Overlooking Downtown Dubai",
+                                        "Rooftop infinity pool, the highest in the world",
+                                        "Running Trail",
+                                        "Sauna",
+                                        "Sauna And Steam Rooms",
+                                        "Schools",
+                                        "Spa",
+                                        "Spa and wellness center",
+                                        "Sports Hub",
+                                        "State Of The Art Fitness Center",
+                                        "State of the art gym",
+                                        "Steam Room",
+                                        "Strategic Investment Opportunity",
+                                        "Swimming Pools",
+                                        "Tennis Academy by Tennis 360",
+                                        "Tennis courts",
+                                        "The Cliff Night Club",
+                                        "The Jumeirah Golf Estates Clubhouse",
+                                        "The Pianite Villas with car Lift",
+                                        "Tommy Fleetwood Golf Academy",
+                                        "Trump Hotels Hanging Suites",
+                                        "Trump International Golf Club",
+                                        "Trump Member Club",
+                                        "Trump Private Club",
+                                        "Two championship golf courses",
+                                        "Two community malls",
+                                        "Uninterrupted Sea Views",
+                                        "Viewing Deck",
+                                        "Wellness Centres",
+                                        "Yoga Lawn",
+                                        "Yoga Zone"
+                                    ],
+                                    "type": "string"
+                                },
+                                "apartment_type": {
+                                    "default": null,
+                                    "description": "Type of apartment. Can be number of rooms (1BR, 2BR, 3BR etc). Or Studio or Retail",
+                                    "type": "string"
+                                },
+                                "city": {
+                                    "default": null,
+                                    "description": "City to filter by",
+                                    "enum": [
+                                        "Costa Del Sol",
+                                        "Dubai",
+                                        "Jeddah",
+                                        "Muscat",
+                                        "Riyadh"
+                                    ],
+                                    "type": "string"
+                                },
+                                "country": {
+                                    "default": null,
+                                    "description": "Country to filter by (in ISO2 code like AE, GB). Matches the country field.",
+                                    "enum": [
+                                        "AE",
+                                        "ES",
+                                        "OM",
+                                        "SA"
+                                    ],
+                                    "type": "string"
+                                },
+                                "floor": {
+                                    "default": null,
+                                    "description": "Name of the floor",
+                                    "type": "string"
+                                },
+                                "max_area_sq_feet": {
+                                    "default": null,
+                                    "description": "Maximum area in square feet.",
+                                    "type": "number"
+                                },
+                                "max_area_sq_meters": {
+                                    "default": null,
+                                    "description": "Maximum land area in square meters",
+                                    "type": "number"
+                                },
+                                "max_expected_completion_date": {
+                                    "default": null,
+                                    "description": "Maximum anticipated completion date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "max_start_date": {
+                                    "default": null,
+                                    "description": "Maximum start date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "max_unit_price": {
+                                    "default": null,
+                                    "description": "Maximum price threshold",
+                                    "type": "number"
+                                },
+                                "min_area_sq_feet": {
+                                    "default": null,
+                                    "description": "Minimum area in square feet.",
+                                    "type": "number"
+                                },
+                                "min_area_sq_meters": {
+                                    "default": null,
+                                    "description": "Minimal land area in square meters",
+                                    "type": "number"
+                                },
+                                "min_balcony_area_sq_ft": {
+                                    "default": null,
+                                    "description": "Minimal Balcony area in square feet",
+                                    "type": "number"
+                                },
+                                "min_balcony_area_sq_m": {
+                                    "default": null,
+                                    "description": "Minimal Balcony area in square meters",
+                                    "type": "number"
+                                },
+                                "min_expected_completion_date": {
+                                    "default": null,
+                                    "description": "Minimal anticipated completion date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "min_start_date": {
+                                    "default": null,
+                                    "description": "Minimal start date (Format: YYYY-MM-DD)",
+                                    "type": "string"
+                                },
+                                "min_unit_price": {
+                                    "default": null,
+                                    "description": "Minimum price threshold",
+                                    "type": "number"
+                                },
+                                "number_of_bathrooms": {
+                                    "default": null,
+                                    "description": "Number of bathroom",
+                                    "type": "number"
+                                },
+                                "parking_slots": {
+                                    "default": null,
+                                    "description": "Number of parking slots",
+                                    "type": "number"
+                                },
+                                "price_currency": {
+                                    "default": "USD",
+                                    "description": "Price currency in USD, GBP, EUR, QAR, AED, OMR. If customer provide minimum or maximum price threshold without currency - currency has to be asked from the customer",
+                                    "enum": [
+                                        "AED",
+                                        "EUR",
+                                        "OMR",
+                                        "SAR"
+                                    ],
+                                    "type": "string"
+                                },
+                                "project_name": {
+                                    "default": null,
+                                    "description": "Customer friendly name of the project",
+                                    "enum": [
+                                        "AIDA",
+                                        "D-Villas",
+                                        "DaVinci Tower",
+                                        "Marea Interiors By Missoni",
+                                        "Neptune Interiors By Mouawad",
+                                        "Trump Tower",
+                                        "Trump Tower Jeddah",
+                                        "URBAN OASIS"
+                                    ],
+                                    "type": "string"
+                                },
+                                "unit_type": {
+                                    "default": null,
+                                    "description": "Filter type of property",
+                                    "enum": [
+                                        "Apartment",
+                                        "Attached Villa",
+                                        "Detached Villa",
+                                        "Residential",
+                                        "Retail",
+                                        "Standalone Villa",
+                                        "Villa"
+                                    ],
+                                    "type": "string"
+                                },
+                                "usage_type": {
+                                    "default": null,
+                                    "description": "Filter Residential or Commercial usage",
+                                    "enum": [
+                                        "Commercial",
+                                        "Residential"
+                                    ],
+                                    "type": "string"
+                                }
+                            },
+                            "required": [],
+                            "type": "object"
+                        }
+                    },
+                    "type": "function"
+                },
+                {
+                    "function": {
+                        "description": "Makes an appointment by sending a confirmation email with a mandatory ICS calendar attachment. Use this tool to confirm appointment visits after collecting the prospect's Name, Date/Time, and Email. For office visits, include the selected office address from the `filter_offices` in the email body and ICS event `location` field. If client tells relatives dates like tomorrow - please use get_current_date to understand current day and client timezone.=. Use time zone from the get_current_date to generate iCal calendar event. The email must be sent in the English, using the specified formats for subject, html_content, text_content, and ics_event.",
+                        "name": "make_an_appointment",
+                        "parameters": {
+                            "additionalProperties": false,
+                            "properties": {
+                                "appointment_day": {
+                                    "description": "Appointment day in YYYY-MM-DD",
+                                    "type": "string"
+                                },
+                                "appointment_time": {
+                                    "description": "Appointment time in hh:mm in timezone of the client. Time is from 00:00 to 23:59",
+                                    "type": "string"
+                                },
+                                "appointment_time_zone": {
+                                    "default": null,
+                                    "description": "Appointment time-zone. If client specifies the time-zone - this parameter must have it in IANA standard. Agent does not forcing client to tell the timezone. In this case this parameter remains null. Do not pass here values like CET or UTC+3.",
+                                    "type": "string"
+                                },
+                                "i_cal_event_description": {
+                                    "description": "iCal event description which is going to be generated and attached to the email",
+                                    "type": "string"
+                                },
+                                "i_cal_event_summary": {
+                                    "description": "iCal event summary which is going to be generated and attached to the email",
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "description": "First name or full name of the recipient",
+                                    "type": "string"
+                                },
+                                "phone": {
+                                    "description": "Contact phone for an appointment",
+                                    "type": "string"
+                                },
+                                "subject": {
+                                    "description": "Email subject line.",
+                                    "type": "string"
+                                },
+                                "to_email": {
+                                    "description": "Recipient's email address (e.g., 'john.doe@example.com')",
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "to_email",
+                                "subject",
+                                "phone",
+                                "name",
+                                "appointment_day",
+                                "appointment_time",
+                                "i_cal_event_summary",
+                                "i_cal_event_description"
+                            ],
+                            "type": "object"
+                        }
+                    },
+                    "type": "function"
+                }
+            ],
+            "top_p": 0.9
+        },
+        "timestamp": 1755242978033311,
+        "tp": "Request"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\",\"refusal\":null},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"Iaz41yIxG9Z\"}\n\n",
+        "timestamp": 1755242980216839,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"I\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"CfRJ3rI6o8MW\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" have\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"WMCeLzZn\"}\n\n",
+        "timestamp": 1755242980265908,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" found\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"tiy8pgi\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" an\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"GrZyTH7k0Q\"}\n\n",
+        "timestamp": 1755242980303332,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" exquisite\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"6jp\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" villa\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"yiRM9SF\"}\n\n",
+        "timestamp": 1755242980347038,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" option\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"rb95WH\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" for\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"1OckYJyta\"}\n\n",
+        "timestamp": 1755242980387082,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" you\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"FJ3ypbCAw\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" in\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"dhN9mkDWoE\"}\n\n",
+        "timestamp": 1755242980435356,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Dubai\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"dMLoYo7\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"Qt51XNTqEUkJ\"}\n\n",
+        "timestamp": 1755242980481496,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Here\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"LNq6InX7\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" are\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"GuTffNS5S\"}\n\n",
+        "timestamp": 1755242980526685,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" the\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"qSYRfDUUU\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" details\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"hgTx5\"}\n\n",
+        "timestamp": 1755242980549194,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\":\\n\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"B0XQv1NH\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"[\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"6VdZImJ2FZlT\"}\n\n",
+        "timestamp": 1755242980588092,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"O\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"z9dyMgwdACSi\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"FFER\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"sTs0Q3J1l\"}\n\n",
+        "timestamp": 1755242980631388,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"_P\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"hsd2jm0yQxm\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ITCH\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"IP30pSJJk\"}\n\n",
+        "timestamp": 1755242980660908,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" id\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"eKtsanEaol\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"=\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"EJLWfBDzkQD5\"}\n\n",
+        "timestamp": 1755242980696843,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"190\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"ysXKPqlFR5\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"8\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"CojGkMbwdv2A\"}\n\n",
+        "timestamp": 1755242980740808,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"]\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"nbfa1kQMdl\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"##\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"1YoxBOPTc3m\"}\n\n",
+        "timestamp": 1755242980785134,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Two\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"oaF0rTLv1\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" championship\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"\"}\n\n",
+        "timestamp": 1755242980832715,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" golf\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"tINVF4Wq\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" courses\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"Tf5zd\"}\n\n",
+        "timestamp": 1755242980869751,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"qj1jcsY1ovV\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Enjoy\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"LEP9Oiiw\"}\n\n",
+        "timestamp": 1755242980908154,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" exclusive\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"TDq\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" access\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"45PFRJ\"}\n\n",
+        "timestamp": 1755242980940133,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" to\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"RrOrTBegfH\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" two\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"KxrA3jcys\"}\n\n",
+        "timestamp": 1755242980967386,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" championship\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" golf\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"iCa3JOLh\"}\n\n",
+        "timestamp": 1755242981052166,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" courses\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"v2ELC\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" with\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"iajIAQ1X\"}\n\n",
+        "timestamp": 1755242981164905,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Tommy\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"ivdHxWc\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Fleet\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"Uh3CcQT\"}\n\n",
+        "timestamp": 1755242981201303,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"wood\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"JsSVBYidP\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Golf\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"8DX5D8JY\"}\n\n",
+        "timestamp": 1755242981243851,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Academy\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"8PClG\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"LmI7p98C3o\"}\n\n",
+        "timestamp": 1755242981287941,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"##\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"dV3odquLjr7\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Spa\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"NaY8Zbhgg\"}\n\n",
+        "timestamp": 1755242981325380,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" and\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"f6OVifYpM\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" wellness\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"NC5D\"}\n\n",
+        "timestamp": 1755242981363094,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" center\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"z5u7LB\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"6NtIJjIAEnB\"}\n\n",
+        "timestamp": 1755242981396981,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Relax\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"pwax9hWY\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" at\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"iyLWfjrEyA\"}\n\n",
+        "timestamp": 1755242981443059,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" the\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"jgYGfup8n\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" spa\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"YDVOsUvUD\"}\n\n",
+        "timestamp": 1755242981471321,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" and\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"nQ9jTyqpU\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" wellness\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"5906\"}\n\n",
+        "timestamp": 1755242981511510,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" center\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"tatjuv\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" with\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"w6raGCMo\"}\n\n",
+        "timestamp": 1755242981545371,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Olympic\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"0LfuY\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"-sized\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"UfV709m\"}\n\n",
+        "timestamp": 1755242981576604,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" and\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"JFkehBkNo\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" resort\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"21MM0L\"}\n\n",
+        "timestamp": 1755242981681211,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"-style\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"c34ZCNA\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" pools\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"FbgroIf\"}\n\n",
+        "timestamp": 1755242981861549,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"XvT7DPOq45\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"##\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"9uHTmTANgIh\"}\n\n",
+        "timestamp": 1755242981993676,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" Fine\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"QYk4eh7z\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" dining\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"luLGqC\"}\n\n",
+        "timestamp": 1755242982036502,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" restaurants\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"j\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"4PqG7nlxRxX\"}\n\n",
+        "timestamp": 1755242982071251,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"D\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"MXbqcL9pVkkT\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ine\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"00wsJpBkJC\"}\n\n",
+        "timestamp": 1755242982114944,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" at\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"btN55rGXme\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" fine\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"Vg5V8tGr\"}\n\n",
+        "timestamp": 1755242982159396,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" dining\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"8rpBnC\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" restaurants\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"9\"}\n\n",
+        "timestamp": 1755242982201592,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" with\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"jM6evLLZ\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" landscaped\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"oV\"}\n\n",
+        "timestamp": 1755242982250615,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" parks\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"aXzTkDO\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" and\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"GQc9oc3PZ\"}\n\n",
+        "timestamp": 1755242982287239,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" jogging\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"kJLkt\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\" tracks\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"4TCzYl\"}\n\n",
+        "timestamp": 1755242982330672,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\".\\n\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"TRoACQaR7a\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"[/\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"AV21kpygJUj\"}\n\n",
+        "timestamp": 1755242982364784,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"O\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"hWDXHB4OdveW\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"FFER\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"bf54fx3gi\"}\n\n",
+        "timestamp": 1755242982401737,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"_P\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"dyafS1Al75P\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"ITCH\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"Kpu7khTMA\"}\n\n",
+        "timestamp": 1755242982486473,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"]\"},\"logprobs\":null,\"finish_reason\":null}],\"obfuscation\":\"WVafHQ6ebwaZ\"}\n\ndata: {\"id\":\"chatcmpl-C4jAZUPWUyqdKcPghcU5k37tqBFjm\",\"object\":\"chat.completion.chunk\",\"created\":1755242979,\"model\":\"gpt-4o-2024-08-06\",\"service_tier\":\"default\",\"system_fingerprint\":\"fp_07871e2ad8\",\"choices\":[{\"index\":0,\"delta\":{},\"logprobs\":null,\"finish_reason\":\"stop\"}],\"obfuscation\":\"x1ZUsfN\"}\n\n",
+        "timestamp": 1755242982504211,
+        "tp": "Chunk"
+    },
+    {
+        "data": "data: [DONE]\n\n",
+        "timestamp": 1755242982516441,
+        "tp": "Chunk"
+    }
+]

@@ -29,7 +29,7 @@ impl OpenAiInnerResponseStream {
         }
 
         loop {
-            let Some(mut data) = self.streamed_response_reader.try_get_next_chunk() else {
+            let Some(data) = self.streamed_response_reader.try_get_next_chunk() else {
                 let next_chunk_from_http = self.network_stream.get_next_chunk().await.unwrap();
 
                 if next_chunk_from_http.is_none() {
@@ -51,13 +51,20 @@ impl OpenAiInnerResponseStream {
                 continue;
             };
 
-            while let Some(choice) = data.get_choice() {
-                if let Some(content) = choice.delta.content {
+            let mut data = match data {
+                StreamReaderResult::Data(data) => data,
+                StreamReaderResult::Done => {
                     if self.tool_calls.len() > 0 {
                         let tool_calls = std::mem::take(&mut self.tool_calls);
                         return Ok(Some(OpenAiStreamHttpChunk::ToolCalls(tool_calls)));
                     }
 
+                    return Ok(None);
+                }
+            };
+
+            while let Some(choice) = data.get_choice() {
+                if let Some(content) = choice.delta.content {
                     if content.len() > 0 {
                         return Ok(Some(OpenAiStreamHttpChunk::Text(content)));
                     }
