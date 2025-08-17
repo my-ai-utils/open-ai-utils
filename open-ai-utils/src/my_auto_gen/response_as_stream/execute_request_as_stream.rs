@@ -49,8 +49,6 @@ pub async fn execute_request_as_stream(
             }
         };
 
-        let mut tool_calls_to_execute = vec![];
-
         while let Some(next_chunk) = response.get_next_chunk(&rb).await.unwrap() {
             match next_chunk {
                 OpenAiStreamHttpChunk::Text(text) => {
@@ -63,6 +61,8 @@ pub async fn execute_request_as_stream(
                             .await;
                     }
 
+                    let mut tool_calls_to_execute = vec![];
+
                     for tool_call in tool_calls {
                         tool_calls_to_execute.push(ToolCallModel {
                             id: tool_call.id,
@@ -73,6 +73,43 @@ pub async fn execute_request_as_stream(
                             },
                         });
                     }
+
+                    let tool_call_results =
+                        super::super::exec_tool_call(&tool_calls_to_execute, &rb, &inner, &ctx)
+                            .await;
+
+                    match tool_call_results {
+                        Ok(mut results) => {
+                            let mut to_send = Vec::with_capacity(tool_calls_to_execute.len());
+                            for tool_call in tool_calls_to_execute {
+                                let result = results.remove(0);
+
+                                to_send.push(ToolCallChunkModel {
+                                    id: tool_call.id,
+                                    fn_name: tool_call.function.name,
+                                    params: tool_call.function.arguments,
+                                    result: result.result_data,
+                                });
+                            }
+
+                            let _ = sender.send(Ok(OpenAiStreamChunk::ToolCalls(to_send))).await;
+                        }
+                        Err(err) => {
+                            let ctx = match &settings {
+                                AutoGenSettings::HttpRequest(settings_model) => {
+                                    create_logs_context(&settings_model, None)
+                                }
+                                AutoGenSettings::Mock(_) => None,
+                            };
+                            logger.write_error(
+                                "execute_open_ai_request_as_stream".to_string(),
+                                err.to_string(),
+                                ctx,
+                            );
+                            let _ = sender.send(Err(err)).await;
+                            return;
+                        }
+                    }
                 }
             }
         }
@@ -80,46 +117,6 @@ pub async fn execute_request_as_stream(
         if text_result.len() > 0 {
             rb.add_assistant_message(std::mem::take(&mut text_result))
                 .await;
-        }
-
-        if tool_calls_to_execute.len() == 0 {
-            break;
-        }
-
-        let tool_call_results =
-            super::super::exec_tool_call(&tool_calls_to_execute, &rb, &inner, &ctx).await;
-
-        match tool_call_results {
-            Ok(mut results) => {
-                let mut to_send = Vec::with_capacity(tool_calls_to_execute.len());
-                for tool_call in tool_calls_to_execute {
-                    let result = results.remove(0);
-
-                    to_send.push(ToolCallChunkModel {
-                        id: tool_call.id,
-                        fn_name: tool_call.function.name,
-                        params: tool_call.function.arguments,
-                        result: result.result_data,
-                    });
-                }
-
-                let _ = sender.send(Ok(OpenAiStreamChunk::ToolCalls(to_send))).await;
-            }
-            Err(err) => {
-                let ctx = match &settings {
-                    AutoGenSettings::HttpRequest(settings_model) => {
-                        create_logs_context(&settings_model, None)
-                    }
-                    AutoGenSettings::Mock(_) => None,
-                };
-                logger.write_error(
-                    "execute_open_ai_request_as_stream".to_string(),
-                    err.to_string(),
-                    ctx,
-                );
-                let _ = sender.send(Err(err)).await;
-                return;
-            }
         }
     }
 }
