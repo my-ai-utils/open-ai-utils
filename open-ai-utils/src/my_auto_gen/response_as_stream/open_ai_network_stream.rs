@@ -1,10 +1,11 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use flurl::FlResponseAsStream;
+use tokio::sync::Mutex;
 
 pub enum OpenAiNetworkStream {
     Http(FlResponseAsStream),
-    Mock(Vec<String>),
+    Mock(Arc<Mutex<Vec<String>>>),
 }
 
 impl OpenAiNetworkStream {
@@ -15,6 +16,7 @@ impl OpenAiNetworkStream {
                 .await
                 .map_err(|err| format!("{:?}", err)),
             OpenAiNetworkStream::Mock(items) => {
+                let mut items = items.lock().await;
                 if items.len() == 0 {
                     return Ok(None);
                 }

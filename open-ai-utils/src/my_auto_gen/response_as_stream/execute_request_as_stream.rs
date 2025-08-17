@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use flurl::{FlUrl, FlUrlResponse, body::FlUrlBody};
 use rust_extensions::{Logger, date_time::DateTimeAsMicroseconds};
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 
 use crate::{
     OpenAiRequestBodyBuilder, OtherRequestData, ToolCallFunctionDescription, my_auto_gen::*,
@@ -18,6 +18,9 @@ pub async fn execute_request_as_stream(
     logger: Arc<dyn Logger + Send + Sync>,
 ) {
     let mut text_result = String::new();
+
+    let mut mock_items = None;
+
     loop {
         let mut response = match &settings {
             AutoGenSettings::HttpRequest(settings_model) => {
@@ -37,7 +40,12 @@ pub async fn execute_request_as_stream(
                 }
             }
             AutoGenSettings::Mock(items) => {
-                OpenAiInnerResponseStream::new(OpenAiNetworkStream::Mock(items.clone()))
+                if mock_items.is_none() {
+                    mock_items = Some(Arc::new(Mutex::new(items.clone())));
+                }
+                OpenAiInnerResponseStream::new(OpenAiNetworkStream::Mock(
+                    mock_items.clone().unwrap(),
+                ))
             }
         };
 
