@@ -58,6 +58,10 @@ impl OpenAiMessageModel {
     pub fn is_assistant(&self) -> bool {
         self.role == crate::request_builder::roles::ASSISTANT_ROLE
     }
+
+    pub fn is_tool(&self) -> bool {
+        self.role == crate::request_builder::roles::TOOL_ROLE
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
