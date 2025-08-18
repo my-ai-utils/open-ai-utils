@@ -116,6 +116,11 @@ pub async fn execute_request_as_stream(
             }
         }
 
+        if text_result.len() > 0 {
+            rb.add_assistant_message(std::mem::take(&mut text_result))
+                .await;
+        }
+
         if !had_fn_called {
             break;
         }
