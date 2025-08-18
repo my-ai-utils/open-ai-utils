@@ -1,15 +1,11 @@
 use rust_extensions::StrOrString;
 
-use crate::my_auto_gen::{TechRequestLogItem, TechRequestLogger, ToolCallModel};
+use crate::{
+    my_auto_gen::{TechRequestLogItem, TechRequestLogger, ToolCallModel},
+    roles::*,
+};
 
 use super::*;
-
-const SYSTEM_ROLE: &'static str = "system";
-const USER_ROLE: &'static str = "user";
-
-const ASSISTANT_ROLE: &'static str = "assistant";
-
-const TOOL_ROLE: &'static str = "tool";
 
 pub struct OpenAiRequestBodyBuilderInner {
     tools: Vec<ToolsDescriptionJsonModel>,

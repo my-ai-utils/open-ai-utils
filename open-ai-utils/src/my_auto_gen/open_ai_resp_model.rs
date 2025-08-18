@@ -46,6 +46,20 @@ pub struct OpenAiMessageModel {
     pub tool_calls: Option<Vec<ToolCallModel>>,
 }
 
+impl OpenAiMessageModel {
+    pub fn is_system(&self) -> bool {
+        self.role == crate::request_builder::roles::SYSTEM_ROLE
+    }
+
+    pub fn is_user(&self) -> bool {
+        self.role == crate::request_builder::roles::USER_ROLE
+    }
+
+    pub fn is_assistant(&self) -> bool {
+        self.role == crate::request_builder::roles::ASSISTANT_ROLE
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ToolCallModel {
     pub id: String,
