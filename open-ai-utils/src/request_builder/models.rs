@@ -1,5 +1,7 @@
 use serde::*;
 
+use crate::roles::*;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiRequestModel {
     pub messages: Vec<OpenAiMessageModel>,
@@ -37,6 +39,12 @@ pub struct OpenAiMessageModel {
     pub tool_calls: Option<Vec<ToolCallsModel>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tool_call_id: Option<String>,
+}
+
+impl MessageRole for OpenAiMessageModel {
+    fn get_role(&self) -> &str {
+        &self.role
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

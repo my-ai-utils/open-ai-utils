@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::ToolCallFunctionDescription;
+use crate::{ToolCallFunctionDescription, roles::MessageRole};
 
 pub enum OpenAiResponse<'s> {
     Message(&'s str),
@@ -46,21 +46,9 @@ pub struct OpenAiMessageModel {
     pub tool_calls: Option<Vec<ToolCallModel>>,
 }
 
-impl OpenAiMessageModel {
-    pub fn is_system(&self) -> bool {
-        self.role == crate::request_builder::roles::SYSTEM_ROLE
-    }
-
-    pub fn is_user(&self) -> bool {
-        self.role == crate::request_builder::roles::USER_ROLE
-    }
-
-    pub fn is_assistant(&self) -> bool {
-        self.role == crate::request_builder::roles::ASSISTANT_ROLE
-    }
-
-    pub fn is_tool(&self) -> bool {
-        self.role == crate::request_builder::roles::TOOL_ROLE
+impl MessageRole for OpenAiMessageModel {
+    fn get_role(&self) -> &str {
+        &self.role
     }
 }
 
