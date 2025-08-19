@@ -7,37 +7,41 @@ use super::*;
 
 pub struct OpenAiRequestBodyBuilder {
     pub(crate) inner: Mutex<OpenAiRequestBodyBuilderInner>,
+    pub llm_model: LlmModel,
 }
 
 impl OpenAiRequestBodyBuilder {
-    pub fn new(model: LlmModel) -> Self {
+    pub fn new(llm_model: LlmModel) -> Self {
         Self {
-            inner: Mutex::new(OpenAiRequestBodyBuilderInner::new(model)),
+            inner: Mutex::new(OpenAiRequestBodyBuilderInner::new(llm_model)),
+            llm_model,
         }
     }
 
     pub fn new_with_system_prompt(
         system_prompt: impl Into<StrOrString<'static>>,
-        model: LlmModel,
+        llm_model: LlmModel,
     ) -> Self {
         Self {
             inner: Mutex::new(OpenAiRequestBodyBuilderInner::new_with_system_prompt(
                 system_prompt,
-                model,
+                llm_model,
             )),
+            llm_model,
         }
     }
 
     pub fn from_history(
         system_prompt: impl Into<StrOrString<'static>>,
         history: Vec<OpenAiMessageModel>,
-        model: LlmModel,
+        llm_model: LlmModel,
     ) -> Self {
         Self {
+            llm_model,
             inner: Mutex::new(OpenAiRequestBodyBuilderInner::from_history(
                 system_prompt,
                 history,
-                model,
+                llm_model,
             )),
         }
     }

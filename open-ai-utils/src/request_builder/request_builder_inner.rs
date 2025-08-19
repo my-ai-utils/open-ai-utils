@@ -7,18 +7,24 @@ use crate::{
 
 use super::*;
 
+const QWEN_NO_THINK_PREFIX: &'static str = "/no_think";
+
+const QWEN_NO_THINK_PREFIX_WITH_CL_CR: &'static str = "/no_think\n";
+
 pub struct OpenAiRequestBodyBuilderInner {
     tools: Vec<ToolsDescriptionJsonModel>,
-    model: OpenAiRequestModel,
+    request_model: OpenAiRequestModel,
+    llm_model: LlmModel,
     pub(crate) tech_log: TechRequestLogger,
 }
 
 impl OpenAiRequestBodyBuilderInner {
-    pub fn new(model: LlmModel) -> Self {
+    pub fn new(llm_model: LlmModel) -> Self {
         Self {
+            llm_model,
             tools: vec![],
-            model: OpenAiRequestModel {
-                model: model.to_string(),
+            request_model: OpenAiRequestModel {
+                model: llm_model.to_string(),
                 tools: serde_json::from_str("[]").unwrap(),
                 messages: vec![],
                 max_tokens: None,
@@ -35,7 +41,7 @@ impl OpenAiRequestBodyBuilderInner {
 
     pub fn new_with_system_prompt(
         system_prompt: impl Into<StrOrString<'static>>,
-        model: LlmModel,
+        llm_model: LlmModel,
     ) -> Self {
         let system_prompt: StrOrString<'static> = system_prompt.into();
         let messages = vec![OpenAiMessageModel {
@@ -46,9 +52,10 @@ impl OpenAiRequestBodyBuilderInner {
         }];
 
         Self {
+            llm_model,
             tools: vec![],
-            model: OpenAiRequestModel {
-                model: model.to_string(),
+            request_model: OpenAiRequestModel {
+                model: llm_model.to_string(),
                 tools: serde_json::from_str("[]").unwrap(),
                 messages,
                 max_tokens: None,
@@ -64,24 +71,24 @@ impl OpenAiRequestBodyBuilderInner {
     }
 
     pub fn set_max_tokens(&mut self, value: usize) {
-        self.model.max_tokens = Some(value);
+        self.request_model.max_tokens = Some(value);
     }
 
     pub fn set_top_p(&mut self, value: f64) {
-        self.model.top_p = Some(value);
+        self.request_model.top_p = Some(value);
     }
 
     pub fn set_temperature(&mut self, value: f64) {
-        self.model.temperature = Some(value);
+        self.request_model.temperature = Some(value);
     }
 
     pub fn set_stream(&mut self) {
-        self.model.stream = Some(true);
+        self.request_model.stream = Some(true);
     }
 
     pub fn add_system_message(&mut self, message: impl Into<String>) {
         let message = message.into();
-        self.model.messages.push(OpenAiMessageModel {
+        self.request_model.messages.push(OpenAiMessageModel {
             role: SYSTEM_ROLE.to_owned(),
             content: Some(message),
             tool_calls: None,
@@ -91,7 +98,7 @@ impl OpenAiRequestBodyBuilderInner {
 
     pub fn add_user_message(&mut self, message: impl Into<String>) {
         let message = message.into();
-        self.model.messages.push(OpenAiMessageModel {
+        self.request_model.messages.push(OpenAiMessageModel {
             role: USER_ROLE.to_owned(),
             content: Some(message),
             tool_calls: None,
@@ -100,7 +107,7 @@ impl OpenAiRequestBodyBuilderInner {
     }
 
     pub fn add_assistant_message(&mut self, message: impl Into<String>) {
-        self.model.messages.push(OpenAiMessageModel {
+        self.request_model.messages.push(OpenAiMessageModel {
             role: ASSISTANT_ROLE.to_owned(),
             content: Some(message.into()),
             tool_calls: None,
@@ -122,7 +129,7 @@ impl OpenAiRequestBodyBuilderInner {
             });
         }
 
-        self.model.messages.push(OpenAiMessageModel {
+        self.request_model.messages.push(OpenAiMessageModel {
             role: ASSISTANT_ROLE.to_owned(),
             content: None,
             tool_calls: Some(tool_calls),
@@ -131,7 +138,7 @@ impl OpenAiRequestBodyBuilderInner {
     }
 
     pub fn add_ok_tool_call_response(&mut self, src: &ToolCallModel, result: String) {
-        self.model.messages.push(OpenAiMessageModel {
+        self.request_model.messages.push(OpenAiMessageModel {
             role: TOOL_ROLE.to_owned(),
             content: Some(result),
             tool_calls: None,
@@ -140,13 +147,13 @@ impl OpenAiRequestBodyBuilderInner {
     }
 
     pub fn get_history(&self) -> &[OpenAiMessageModel] {
-        self.model.messages.as_slice()
+        self.request_model.messages.as_slice()
     }
 
     pub fn from_history(
         system_prompt: impl Into<StrOrString<'static>>,
         history: Vec<OpenAiMessageModel>,
-        model: LlmModel,
+        llm_model: LlmModel,
     ) -> Self {
         let system_prompt: StrOrString<'static> = system_prompt.into();
         let mut messages = vec![OpenAiMessageModel {
@@ -159,8 +166,9 @@ impl OpenAiRequestBodyBuilderInner {
         messages.extend(history);
 
         Self {
-            model: OpenAiRequestModel {
-                model: model.to_string(),
+            llm_model,
+            request_model: OpenAiRequestModel {
+                model: llm_model.to_string(),
                 tools: serde_json::from_str("[]").unwrap(),
                 messages,
                 max_tokens: None,
@@ -181,11 +189,11 @@ impl OpenAiRequestBodyBuilderInner {
             tp: "function".to_string(),
             function: Some(func_description),
         });
-        self.model.tools = None;
+        self.request_model.tools = None;
     }
 
     pub fn add_tools(&mut self, tools: serde_json::Value) {
-        self.model.tools = Some(tools);
+        self.request_model.tools = Some(tools);
     }
 
     /*
@@ -200,12 +208,12 @@ impl OpenAiRequestBodyBuilderInner {
 
     pub fn get_model(&mut self, other_request_data: &OtherRequestData) -> OpenAiRequestModel {
         if self.tools.len() > 0 {
-            if self.model.tools.is_none() {
-                self.model.tools = Some(serde_json::to_value(&self.tools).unwrap());
+            if self.request_model.tools.is_none() {
+                self.request_model.tools = Some(serde_json::to_value(&self.tools).unwrap());
             }
         }
 
-        let mut result = self.model.clone();
+        let mut result = self.request_model.clone();
 
         result.n = other_request_data.n;
         result.presence_penalty = other_request_data.presence_penalty;
@@ -213,11 +221,25 @@ impl OpenAiRequestBodyBuilderInner {
         result.top_p = other_request_data.top_p;
         result.temperature = other_request_data.temperature;
 
+        if !other_request_data.think {
+            if let Some(first_message) = result.messages.first_mut() {
+                if first_message.is_system() {
+                    if self.llm_model.is_qwen3_30b_a3b() {
+                        if let Some(content) = first_message.content.as_mut() {
+                            if !content.starts_with(QWEN_NO_THINK_PREFIX) {
+                                content.insert_str(0, QWEN_NO_THINK_PREFIX_WITH_CL_CR);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         result
     }
 
     pub fn remove_tool_calls(&mut self) {
-        self.model.messages.retain(|itm| {
+        self.request_model.messages.retain(|itm| {
             if itm.role == ASSISTANT_ROLE && itm.tool_calls.is_some() {
                 return false;
             }
@@ -231,7 +253,7 @@ impl OpenAiRequestBodyBuilderInner {
     }
 
     pub fn get_last_message(&self) -> &OpenAiMessageModel {
-        self.model.messages.last().unwrap()
+        self.request_model.messages.last().unwrap()
     }
 
     pub fn write_tech_log(&mut self, item: TechRequestLogItem) {
