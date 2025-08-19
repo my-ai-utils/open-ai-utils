@@ -14,8 +14,11 @@ impl LlmModel {
         }
     }
 
-    pub fn is_qwen3_30b_a3b(&self) -> bool {
-        matches!(self, LlmModel::Qwen3_30bA3b)
+    pub fn is_qwen3(&self) -> bool {
+        match self {
+            LlmModel::Qwen3_30bA3b => true,
+            _ => false,
+        }
     }
 
     pub fn to_string(&self) -> String {

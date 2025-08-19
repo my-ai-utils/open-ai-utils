@@ -224,7 +224,7 @@ impl OpenAiRequestBodyBuilderInner {
         if !other_request_data.think {
             if let Some(first_message) = result.messages.first_mut() {
                 if first_message.is_system() {
-                    if self.llm_model.is_qwen3_30b_a3b() {
+                    if self.llm_model.is_qwen3() {
                         if let Some(content) = first_message.content.as_mut() {
                             if !content.starts_with(QWEN_NO_THINK_PREFIX) {
                                 content.insert_str(0, QWEN_NO_THINK_PREFIX_WITH_CL_CR);
