@@ -44,26 +44,20 @@ pub fn generate_property(prop: StructProperty) -> Result<TokenStream, syn::Error
         None => quote::quote! {None},
     };
 
-    let value = attr.get_value_from_single_or_named("description")?;
-    let value = value.as_string()?;
-    let value = value.as_str();
+    let description = attr.get_value_from_single_or_named("description")?;
+    let description = description.as_string()?;
+    let description = description.as_str();
 
     let result = if let PropertyType::OptionOf(opt_tp) = prop.ty {
         let as_token = opt_tp.get_token_stream();
         quote::quote! {
-           properties.insert(
-            #prop_name.into(),
-            Option::<#as_token>::get_type_description(#value, #default_value, #enum_to_render).await,
-        );
-         }
+          .write(#prop_name, Option::<#as_token>::get_type_description(Some(#description), #default_value, #enum_to_render).await)
+        }
     } else {
         let token = prop.ty.get_token_stream();
         quote::quote! {
-           properties.insert(
-            #prop_name.into(),
-            #token::get_type_description(#value, #default_value, #enum_to_render).await,
-        );
-         }
+            .write(#prop_name, #token::get_type_description(Some(#description), #default_value, #enum_to_render).await)
+        }
     };
 
     Ok(result)

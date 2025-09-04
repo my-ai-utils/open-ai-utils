@@ -20,6 +20,12 @@ pub struct MyRequestModel {
 
     #[property(description: "Minimal condition")]
     pub min_condition: Option<i64>,
+
+    #[property(enum:["Value1", "Value2", "Value3"], description: "Several enum values")]
+    pub several_enum: Vec<String>,
+
+    #[property(enum:["Value1", "Value2", "Value3"], description: "Several enum values optional")]
+    pub several_enum_opt: Option<Vec<String>>,
 }
 
 async fn get_other_condition_enum() -> Option<Vec<StrOrString<'static>>> {
@@ -38,9 +44,7 @@ mod tests {
         use open_ai_utils::FunctionToolCallDescription;
         let description = MyRequestModel::get_description().await;
 
-        let json = serde_json::to_string_pretty(&description).unwrap();
-
-        println!("{}", json);
+        println!("{}", description.build());
     }
 
     #[tokio::test]
@@ -53,7 +57,7 @@ mod tests {
         let func_json_description = FunctionDescriptionJsonModel {
             name: "filter_showrooms".to_string(),
             description: "Filters company location data from a JSON file based on criteria like city (extracted from address), specific service offered (e.g., Sales, Repairs), and geolocation ranges (latitude/longitude).".to_string(),
-            parameters: MyRequestModel::get_description().await,
+            parameters: serde_json::from_str(MyRequestModel::get_description().await.build().as_str()).unwrap(),
             strict: None,
         };
 

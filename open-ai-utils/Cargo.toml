@@ -16,3 +16,4 @@ open-ai-macros = { path = "../open-ai-macros" }
 
 async-trait = "*"
 tokio = { version = "*" }
+my-json = { tag = "0.3.2", git = "https://github.com/MyJetTools/my-json.git" }

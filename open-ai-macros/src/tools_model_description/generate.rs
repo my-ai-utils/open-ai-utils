@@ -26,24 +26,18 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
         #[async_trait::async_trait]
         impl open_ai_utils::FunctionToolCallDescription  for #struct_name{
 
-        async fn get_description() -> serde_json::Value {
+        async fn get_description() -> open_ai_utils::my_json::json_writer::JsonObjectWriter {
         use open_ai_utils::FunctionTypeDescription;
 
-        let mut params = serde_json::Map::new();
-        params.insert("type".into(), "object".into());
+        let props = open_ai_utils::my_json::json_writer::JsonObjectWriter::new()
 
-        let mut properties = serde_json::Map::new();
+        #(#fields_to_render)*;
 
-        #(#fields_to_render)*
+        open_ai_utils::my_json::json_writer::JsonObjectWriter::new().write("type", "object")
+        .write("properties", props )
+        .write_iter("required", [#(#required_fields,)*].into_iter())
+        .write("additionalProperties", false)
 
-
-        params.insert("properties".into(), properties.into());
-
-        params.insert("required".into(), serde_json::Value::Array(vec![#(#required_fields.into(),)*]));
-        params.insert("additionalProperties".into(), false.into());
-
-
-        serde_json::Value::Object(params)
        }
 
       }

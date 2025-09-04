@@ -2,82 +2,99 @@ use rust_extensions::StrOrString;
 
 #[async_trait::async_trait]
 pub trait FunctionToolCallDescription {
-    async fn get_description() -> serde_json::Value;
+    async fn get_description() -> my_json::json_writer::JsonObjectWriter;
 }
 
 #[async_trait::async_trait]
 pub trait FunctionTypeDescription {
     async fn get_type_description(
-        description: &str,
+        description: Option<&str>,
         default: Option<&str>,
         enum_data: Option<Vec<StrOrString<'static>>>,
-    ) -> serde_json::Value;
+    ) -> my_json::json_writer::JsonObjectWriter;
 }
 
 pub trait GetJsonTypeName {
-    const NAME: &'static str;
+    const TYPE_NAME: &'static str;
+    const OPTIONAL: bool;
 }
 
 impl GetJsonTypeName for u8 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for i8 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for u16 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for i16 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for u32 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for i32 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for u64 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for i64 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for f64 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for f32 {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for usize {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for isize {
-    const NAME: &'static str = "number";
+    const TYPE_NAME: &'static str = "number";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for bool {
-    const NAME: &'static str = "boolean";
+    const TYPE_NAME: &'static str = "boolean";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for String {
-    const NAME: &'static str = "string";
+    const TYPE_NAME: &'static str = "string";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for &'_ str {
-    const NAME: &'static str = "string";
+    const TYPE_NAME: &'static str = "string";
+    const OPTIONAL: bool = false;
 }
 
 impl GetJsonTypeName for &'_ String {
-    const NAME: &'static str = "string";
+    const TYPE_NAME: &'static str = "string";
+    const OPTIONAL: bool = false;
 }

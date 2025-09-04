@@ -1,3 +1,4 @@
+use my_json::json_writer::JsonObjectWriter;
 use rust_extensions::StrOrString;
 
 use crate::{FunctionTypeDescription, GetJsonTypeName};
@@ -5,43 +6,45 @@ use crate::{FunctionTypeDescription, GetJsonTypeName};
 #[async_trait::async_trait]
 impl<T: GetJsonTypeName> FunctionTypeDescription for Vec<T> {
     async fn get_type_description(
-        description: &str,
+        description: Option<&str>,
         default: Option<&str>,
         enum_data: Option<Vec<StrOrString<'static>>>,
-    ) -> serde_json::Value {
+    ) -> JsonObjectWriter {
         generate_description_of_vec_parameter::<T>(description, default, enum_data).await
     }
 }
 
 async fn generate_description_of_vec_parameter<Tp: GetJsonTypeName + FunctionTypeDescription>(
-    description: &str,
+    description: Option<&str>,
     default: Option<&str>,
     enum_data: Option<Vec<StrOrString<'static>>>,
-) -> serde_json::Value {
-    let item_description = Tp::get_type_description(description, default, enum_data.clone()).await;
+) -> JsonObjectWriter {
+    let mut result = JsonObjectWriter::new()
+        .write("type", "array")
+        .write_if_some("description", description)
+        .write_if_some("default", default);
 
-    /*
-       if let Some(enum_data) = enum_data.as_ref() {
-           let enum_data: Vec<_> = enum_data.iter().map(|itm| itm.as_str()).collect();
-           return serde_json::json! {
-              {
-                   "type": "array",
+    result = fill_array_sub_elements(result, Tp::TYPE_NAME, &enum_data);
 
-                   "items": item_description,
-                   "description": description
-              }
+    if enum_data.is_some() {
+        result = result.write("uniqueItems", true);
+    }
 
-           };
-       };
-    */
+    result
+}
 
-    return serde_json::json! {
-
-       {
-           "type": "array",
-            "items": item_description,
-            "description": description
+pub fn fill_array_sub_elements(
+    writer: JsonObjectWriter,
+    tp_name: &str,
+    enum_data: &Option<Vec<StrOrString<'static>>>,
+) -> JsonObjectWriter {
+    writer.write_json_object("items", move |items| {
+        let mut items = items.write("type", tp_name);
+        if let Some(enum_data) = enum_data {
+            let enums = enum_data.iter().map(|itm| itm.as_str());
+            items = items.write_iter("enum", enums);
         }
 
-    };
+        items
+    })
 }

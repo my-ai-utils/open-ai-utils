@@ -35,7 +35,8 @@ impl ToolFunctions {
         let func_json_description = FunctionDescriptionJsonModel {
             name: func_name.to_string(),
             description: func_description.to_string(),
-            parameters: ParamType::get_description().await,
+            parameters: serde_json::from_str(ParamType::get_description().await.build().as_str())
+                .unwrap(),
             strict: None,
         };
 
