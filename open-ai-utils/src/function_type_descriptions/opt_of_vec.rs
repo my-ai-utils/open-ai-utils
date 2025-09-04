@@ -19,17 +19,11 @@ async fn generate_description_of_opt_of_vec_parameter<Tp: GetJsonTypeName>(
     default: Option<&str>,
     enum_data: Option<Vec<StrOrString<'static>>>,
 ) -> my_json::json_writer::JsonObjectWriter {
-    JsonObjectWriter::new()
+    let result = JsonObjectWriter::new()
+        .write("type", "array")
         .write_if_some("description", description)
-        .write("default", default)
-        .write_json_array("anyOf", |any_of| {
-            any_of
-                .write_json_object(|mut json_object| {
-                    json_object = json_object
-                        .write("type", "array")
-                        .write("uniqueItems", true);
-                    super::vec_of::fill_array_sub_elements(json_object, Tp::TYPE_NAME, &enum_data)
-                })
-                .write_json_object(|json_object| json_object.write("type", JsonNullValue))
-        })
+        .write("default", default);
+
+    super::vec_of::fill_array_sub_elements(result, Tp::TYPE_NAME, &enum_data)
+        .write("uniqueItems", true)
 }
