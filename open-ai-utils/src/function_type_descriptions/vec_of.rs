@@ -20,18 +20,20 @@ async fn generate_description_of_vec_parameter<Tp: GetJsonTypeName + FunctionTyp
 ) -> serde_json::Value {
     let item_description = Tp::get_type_description(description, default, enum_data.clone()).await;
 
-    if let Some(enum_data) = enum_data.as_ref() {
-        let enum_data: Vec<_> = enum_data.iter().map(|itm| itm.as_str()).collect();
-        return serde_json::json! {
-           {
-                "type": "array",
-                "enum": enum_data,
-                "items": item_description,
-                "description": description
-           }
+    /*
+       if let Some(enum_data) = enum_data.as_ref() {
+           let enum_data: Vec<_> = enum_data.iter().map(|itm| itm.as_str()).collect();
+           return serde_json::json! {
+              {
+                   "type": "array",
 
-        };
-    };
+                   "items": item_description,
+                   "description": description
+              }
+
+           };
+       };
+    */
 
     return serde_json::json! {
 
