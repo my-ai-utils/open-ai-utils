@@ -21,6 +21,11 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
         fields_to_render.push(property);
     }
 
+    let required = if required_fields.len() > 0 {
+        quote::quote! {  .write_iter("required", [#(#required_fields,)*].into_iter())}
+    } else {
+        quote::quote! {  .write("required", open_ai_utils::my_json::json_writer::EmptyJsonArray)}
+    };
     let result = quote::quote! {
 
         #[async_trait::async_trait]
@@ -35,7 +40,7 @@ pub fn generate(input: &syn::DeriveInput) -> Result<TokenStream, syn::Error> {
 
         open_ai_utils::my_json::json_writer::JsonObjectWriter::new().write("type", "object")
         .write("properties", props )
-        .write_iter("required", [#(#required_fields,)*].into_iter())
+        #required
         .write("additionalProperties", false)
 
        }

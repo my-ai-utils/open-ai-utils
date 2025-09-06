@@ -1,11 +1,6 @@
 use rust_extensions::StrOrString;
 
 #[async_trait::async_trait]
-pub trait FunctionToolCallDescription {
-    async fn get_description() -> my_json::json_writer::JsonObjectWriter;
-}
-
-#[async_trait::async_trait]
 pub trait FunctionTypeDescription {
     async fn get_type_description(
         description: Option<&str>,
