@@ -1,6 +1,7 @@
 #[derive(Debug, Clone, Copy)]
 pub enum LlmModel {
     Gpt4o,
+    Gpt4oMini,
     Gpt5,
     Qwen3_30bA3b,
 }
@@ -9,6 +10,7 @@ impl LlmModel {
     pub fn as_str(&self) -> &'static str {
         match self {
             LlmModel::Gpt4o => "gpt-4o",
+            LlmModel::Gpt4oMini => "gpt-4o-mini",
             LlmModel::Gpt5 => "gpt-5",
             LlmModel::Qwen3_30bA3b => "Qwen/Qwen3-30B-A3B",
         }
