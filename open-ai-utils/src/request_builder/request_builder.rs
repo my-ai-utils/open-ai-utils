@@ -4,6 +4,7 @@ use tokio::sync::Mutex;
 use crate::my_auto_gen::{TechRequestLogItem, TechRequestLogger, ToolCallModel};
 
 use super::*;
+use crate::LlmModel;
 
 pub struct OpenAiRequestBodyBuilder {
     pub(crate) inner: Mutex<OpenAiRequestBodyBuilderInner>,

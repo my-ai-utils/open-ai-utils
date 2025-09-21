@@ -6,6 +6,7 @@ use crate::{
 };
 
 use super::*;
+use crate::LlmModel;
 
 const QWEN_NO_THINK_PREFIX: &'static str = "/no_think";
 

@@ -20,6 +20,14 @@ impl LlmModel {
         }
     }
 
+    pub fn is_gpt_5(&self) -> bool {
+        match self {
+            LlmModel::Gpt5 => true,
+            LlmModel::Gpt5Mini => true,
+            LlmModel::Gpt5Nano => true,
+            _ => false,
+        }
+    }
     pub fn is_qwen3(&self) -> bool {
         match self {
             LlmModel::Qwen3_30bA3b => true,

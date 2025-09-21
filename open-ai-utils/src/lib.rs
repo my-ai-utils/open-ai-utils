@@ -11,3 +11,5 @@ pub mod my_auto_gen;
 pub mod tool_calls_types;
 
 pub extern crate my_json;
+mod llm_model;
+pub use llm_model::*;
