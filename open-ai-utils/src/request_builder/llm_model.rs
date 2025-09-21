@@ -3,6 +3,8 @@ pub enum LlmModel {
     Gpt4o,
     Gpt4oMini,
     Gpt5,
+    Gpt5Mini,
+    Gpt5Nano,
     Qwen3_30bA3b,
 }
 
@@ -12,6 +14,8 @@ impl LlmModel {
             LlmModel::Gpt4o => "gpt-4o",
             LlmModel::Gpt4oMini => "gpt-4o-mini",
             LlmModel::Gpt5 => "gpt-5",
+            LlmModel::Gpt5Mini => "gpt-5-mini",
+            LlmModel::Gpt5Nano => "gpt-5-nano",
             LlmModel::Qwen3_30bA3b => "Qwen/Qwen3-30B-A3B",
         }
     }
