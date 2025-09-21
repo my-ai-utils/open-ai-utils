@@ -22,25 +22,26 @@ mod tests {
     async fn test_generation() {
         let description = MyRequestModelNoRequired::get_description().await.build();
 
-        let result = my_json::j_path::j_path(description.as_bytes(), "type")
+        let result = my_json::j_path::get_value(description.as_bytes(), "type")
             .unwrap()
             .unwrap();
 
         assert_eq!(result.as_str().unwrap().as_str(), "object");
 
-        let result = my_json::j_path::j_path(description.as_bytes(), "properties.city.type")
+        let result = my_json::j_path::get_value(description.as_bytes(), "properties.city.type")
             .unwrap()
             .unwrap();
 
         assert_eq!(result.as_str().unwrap().as_str(), "string");
 
-        let result = my_json::j_path::j_path(description.as_bytes(), "properties.city.description")
-            .unwrap()
-            .unwrap();
+        let result =
+            my_json::j_path::get_value(description.as_bytes(), "properties.city.description")
+                .unwrap()
+                .unwrap();
 
         assert_eq!(result.as_str().unwrap().as_str(), "city description");
 
-        let result = my_json::j_path::j_path(description.as_bytes(), "properties.city.default")
+        let result = my_json::j_path::get_value(description.as_bytes(), "properties.city.default")
             .unwrap()
             .unwrap();
 
