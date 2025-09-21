@@ -14,8 +14,8 @@ pub enum Gpt5ReasoningEffort {
 pub enum Gpt5VerbosityEffort {
     #[serde(rename = "hight")]
     Hight,
-    #[serde(rename = "minimal")]
-    Minimal,
+    #[serde(rename = "medium")]
+    Medium,
     #[serde(rename = "low")]
     Low,
 }
