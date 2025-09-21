@@ -34,6 +34,7 @@ impl OpenAiRequestBodyBuilderInner {
                 frequency_penalty: None,
                 presence_penalty: None,
                 n: None,
+                reasoning_effort: None,
             },
             tech_log: Default::default(),
         }
@@ -65,6 +66,7 @@ impl OpenAiRequestBodyBuilderInner {
                 frequency_penalty: None,
                 presence_penalty: None,
                 n: None,
+                reasoning_effort: None,
             },
             tech_log: Default::default(),
         }
@@ -72,6 +74,10 @@ impl OpenAiRequestBodyBuilderInner {
 
     pub fn set_max_tokens(&mut self, value: usize) {
         self.request_model.max_tokens = Some(value);
+    }
+
+    pub fn set_open_gpt5_reasoning_settings(&mut self, reasoning_effort: Gpt5ReasoningEffort) {
+        self.request_model.reasoning_effort = Some(reasoning_effort);
     }
 
     pub fn set_top_p(&mut self, value: f64) {
@@ -178,6 +184,7 @@ impl OpenAiRequestBodyBuilderInner {
                 frequency_penalty: None,
                 presence_penalty: None,
                 n: None,
+                reasoning_effort: None,
             },
             tools: vec![],
             tech_log: Default::default(),

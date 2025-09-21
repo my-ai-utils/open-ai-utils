@@ -1,6 +1,6 @@
 use serde::*;
 
-use crate::roles::*;
+use crate::{Gpt5ReasoningEffort, roles::*};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiRequestModel {
@@ -17,6 +17,9 @@ pub struct OpenAiRequestModel {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f64>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reasoning_effort: Option<Gpt5ReasoningEffort>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub presence_penalty: Option<f64>,
