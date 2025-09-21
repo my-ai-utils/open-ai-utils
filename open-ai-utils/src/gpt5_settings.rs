@@ -1,5 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Gpt5Settings {
+    pub reasoning_effort: Option<Gpt5ReasoningEffort>,
+    pub verbosity: Option<Gpt5VerbosityEffort>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum Gpt5ReasoningEffort {
     #[serde(rename = "hight")]

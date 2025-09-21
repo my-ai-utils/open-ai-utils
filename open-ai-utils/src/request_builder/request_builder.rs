@@ -62,10 +62,9 @@ impl OpenAiRequestBodyBuilder {
         write_access.add_tools_call_description(func_description);
     }
 
-    pub async fn get_model(&self, other_request_data: &OtherRequestData) -> OpenAiRequestModel {
+    pub async fn get_model(&self) -> OpenAiRequestModel {
         let mut write_access = self.inner.lock().await;
-        let result = write_access.get_model(other_request_data);
-
+        let result = write_access.get_model();
         result
     }
 

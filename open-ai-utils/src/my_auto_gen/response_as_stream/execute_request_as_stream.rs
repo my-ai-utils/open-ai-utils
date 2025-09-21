@@ -4,9 +4,7 @@ use flurl::{FlUrl, FlUrlResponse, body::FlUrlBody};
 use rust_extensions::{Logger, date_time::DateTimeAsMicroseconds};
 use tokio::sync::{Mutex, RwLock};
 
-use crate::{
-    OpenAiRequestBodyBuilder, OtherRequestData, ToolCallFunctionDescription, my_auto_gen::*,
-};
+use crate::{OpenAiRequestBodyBuilder, ToolCallFunctionDescription, my_auto_gen::*};
 
 pub async fn execute_request_as_stream(
     settings: AutoGenSettings,
@@ -14,7 +12,6 @@ pub async fn execute_request_as_stream(
     rb: Arc<OpenAiRequestBodyBuilder>,
     inner: Arc<RwLock<MyAutoGenInner>>,
     ctx: String,
-    other_request_data: OtherRequestData,
     logger: Arc<dyn Logger + Send + Sync>,
 ) {
     let mut text_result = String::new();
@@ -25,14 +22,7 @@ pub async fn execute_request_as_stream(
         let mut had_fn_called = false;
         let mut response = match &settings {
             AutoGenSettings::HttpRequest(settings_model) => {
-                match prepare_open_ai_fl_url_streamed_request(
-                    &settings_model,
-                    &rb,
-                    &logger,
-                    &other_request_data,
-                )
-                .await
-                {
+                match prepare_open_ai_fl_url_streamed_request(&settings_model, &rb, &logger).await {
                     Ok(response) => response,
                     Err(err) => {
                         let _ = sender.send(Err(err)).await;
@@ -131,9 +121,8 @@ async fn prepare_open_ai_fl_url_streamed_request(
     settings: &HttpRequestSettingsModel,
     rb: &OpenAiRequestBodyBuilder,
     logger: &Arc<dyn Logger + Send + Sync>,
-    other_request_data: &OtherRequestData,
 ) -> Result<OpenAiInnerResponseStream, String> {
-    let response = prepare_open_ai_fl_url(settings, rb, logger, other_request_data).await?;
+    let response = prepare_open_ai_fl_url(settings, rb, logger).await?;
     let status_code = response.get_status_code();
 
     if status_code != 200 {
@@ -162,7 +151,6 @@ async fn prepare_open_ai_fl_url(
     settings: &HttpRequestSettingsModel,
     rb: &OpenAiRequestBodyBuilder,
     logger: &Arc<dyn Logger + Send + Sync>,
-    other_request_data: &OtherRequestData,
 ) -> Result<FlUrlResponse, String> {
     let mut attempt = 0;
     loop {
@@ -179,7 +167,7 @@ async fn prepare_open_ai_fl_url(
         let model = rb
             .modify_and_get_result(|rb| {
                 rb.set_stream();
-                rb.get_model(other_request_data)
+                rb.get_model()
             })
             .await;
 

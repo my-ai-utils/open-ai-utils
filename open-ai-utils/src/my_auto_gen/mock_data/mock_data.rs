@@ -37,7 +37,7 @@ async fn test() {
     let network_stream = OpenAiNetworkStream::Mock(data.clone());
     let mut stream = OpenAiInnerResponseStream::new(network_stream);
 
-    let rb = OpenAiRequestBodyBuilder::new(crate::LlmModel::Gpt4o);
+    let rb = OpenAiRequestBodyBuilder::new(crate::LlmModel::Gpt4o(crate::Gpt4Settings::default()));
     while let Some(chunk) = stream.get_next_chunk(&rb).await.unwrap() {
         println!("{:?}", chunk);
     }
@@ -45,7 +45,7 @@ async fn test() {
     let network_stream = OpenAiNetworkStream::Mock(data.clone());
     let mut stream = OpenAiInnerResponseStream::new(network_stream);
 
-    let rb = OpenAiRequestBodyBuilder::new(crate::LlmModel::Gpt4o);
+    let rb = OpenAiRequestBodyBuilder::new(crate::LlmModel::Gpt4o(crate::Gpt4Settings::default()));
     while let Some(chunk) = stream.get_next_chunk(&rb).await.unwrap() {
         println!("{:?}", chunk);
     }

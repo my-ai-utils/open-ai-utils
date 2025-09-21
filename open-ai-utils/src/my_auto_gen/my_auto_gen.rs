@@ -5,7 +5,7 @@ use serde::de::DeserializeOwned;
 use tokio::sync::RwLock;
 
 use crate::{
-    FunctionToolCallDescription, OpenAiRequestBodyBuilder, OtherRequestData,
+    FunctionToolCallDescription, OpenAiRequestBodyBuilder,
     my_auto_gen::{
         AutoGenSettings, MyAutoGenInner, OpenAiResponseStream, RemoteToolFunctions,
         RemoteToolFunctionsHandler, ToolFunction, ToolFunctions,
@@ -79,7 +79,6 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: &OpenAiRequestBodyBuilder,
         ctx: &str,
-        other_request_data: OtherRequestData,
     ) -> Result<Vec<super::argentic_response::ToolCallsResult>, String> {
         {
             let inner = self.inner.read().await;
@@ -89,13 +88,10 @@ impl MyAutoGen {
         let mut tool_calls_result: Vec<ToolCallsResult> = Vec::new();
 
         loop {
-            let request = super::argentic_response::execute_fl_url_request(
-                settings.unwrap_as_http(),
-                rb,
-                &other_request_data,
-            )
-            .await
-            .map_err(|itm| itm.to_string());
+            let request =
+                super::argentic_response::execute_fl_url_request(settings.unwrap_as_http(), rb)
+                    .await
+                    .map_err(|itm| itm.to_string());
 
             let (model, response_body) = match request {
                 Ok(resp) => resp,
@@ -145,7 +141,6 @@ impl MyAutoGen {
         settings: &AutoGenSettings,
         rb: Arc<OpenAiRequestBodyBuilder>,
         ctx: &str,
-        other_request_data: OtherRequestData,
     ) -> Result<OpenAiResponseStream, String> {
         {
             let inner = self.inner.read().await;
@@ -160,7 +155,6 @@ impl MyAutoGen {
             rb,
             self.inner.clone(),
             ctx.to_string(),
-            other_request_data,
             self.logger.clone(),
         ));
 

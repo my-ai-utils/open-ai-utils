@@ -1,5 +1,4 @@
 pub mod http_chunked_body_reader;
-mod open_ai_tools_model;
 
 pub extern crate open_ai_macros as macros;
 mod function_type_descriptions;
@@ -13,3 +12,10 @@ pub mod tool_calls_types;
 pub extern crate my_json;
 mod llm_model;
 pub use llm_model::*;
+
+mod gpt5_settings;
+pub use gpt5_settings::*;
+mod gpt4_settings;
+pub use gpt4_settings::*;
+mod qwen_settings;
+pub use qwen_settings::*;

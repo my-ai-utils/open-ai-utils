@@ -51,7 +51,7 @@ mod tests {
     async fn test_builder_and_model() {
         let mut builder = OpenAiRequestBodyBuilder::new_with_system_prompt(
             "test_system_prompt_data",
-            open_ai_utils::LlmModel::Gpt4o,
+            open_ai_utils::LlmModel::Gpt4o(open_ai_utils::Gpt4Settings::default()),
         );
 
         let func_json_description = FunctionDescriptionJsonModel {
@@ -67,7 +67,7 @@ mod tests {
             .add_tools_call_description(func_json_description)
             .await;
 
-        let model = builder.get_model(&Default::default()).await;
+        let model = builder.get_model().await;
 
         let json_str = serde_json::to_string_pretty(&model).unwrap();
 

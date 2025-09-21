@@ -36,6 +36,41 @@ pub struct OpenAiRequestModel {
     pub stream: Option<bool>,
 }
 
+impl OpenAiRequestModel {
+    pub fn new(model: LlmModel, messages: Vec<OpenAiMessageModel>) -> Self {
+        let mut result = OpenAiRequestModel {
+            model: model.to_string(),
+            tools: serde_json::from_str("[]").unwrap(),
+            messages,
+            max_tokens: None,
+            temperature: None,
+            top_p: None,
+            stream: None,
+            frequency_penalty: None,
+            presence_penalty: None,
+            n: None,
+            reasoning_effort: None,
+            verbosity: None,
+        };
+        match model.as_settings() {
+            SettingsMode::Gpt4(settings) => {
+                result.presence_penalty = settings.presence_penalty;
+                result.frequency_penalty = settings.frequency_penalty;
+                result.n = settings.n;
+                result.top_p = settings.top_p;
+                result.temperature = settings.temperature;
+            }
+            SettingsMode::Gpt5(settings) => {
+                result.reasoning_effort = settings.reasoning_effort;
+                result.verbosity = settings.verbosity;
+            }
+            SettingsMode::Qwen(_) => {}
+        }
+
+        result
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OpenAiMessageModel {
     pub role: String,

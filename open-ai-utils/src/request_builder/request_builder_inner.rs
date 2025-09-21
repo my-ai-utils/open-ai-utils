@@ -6,7 +6,7 @@ use crate::{
 };
 
 use super::*;
-use crate::LlmModel;
+use crate::*;
 
 const QWEN_NO_THINK_PREFIX: &'static str = "/no_think";
 
@@ -24,20 +24,7 @@ impl OpenAiRequestBodyBuilderInner {
         Self {
             llm_model,
             tools: vec![],
-            request_model: OpenAiRequestModel {
-                model: llm_model.to_string(),
-                tools: serde_json::from_str("[]").unwrap(),
-                messages: vec![],
-                max_tokens: None,
-                temperature: None,
-                top_p: None,
-                stream: None,
-                frequency_penalty: None,
-                presence_penalty: None,
-                n: None,
-                reasoning_effort: None,
-                verbosity: None,
-            },
+            request_model: OpenAiRequestModel::new(llm_model, vec![]),
             tech_log: Default::default(),
         }
     }
@@ -55,22 +42,9 @@ impl OpenAiRequestBodyBuilderInner {
         }];
 
         Self {
-            llm_model,
+            llm_model: llm_model,
             tools: vec![],
-            request_model: OpenAiRequestModel {
-                model: llm_model.to_string(),
-                tools: serde_json::from_str("[]").unwrap(),
-                messages,
-                max_tokens: None,
-                temperature: None,
-                top_p: None,
-                stream: None,
-                frequency_penalty: None,
-                presence_penalty: None,
-                n: None,
-                reasoning_effort: None,
-                verbosity: None,
-            },
+            request_model: OpenAiRequestModel::new(llm_model, messages),
             tech_log: Default::default(),
         }
     }
@@ -181,20 +155,7 @@ impl OpenAiRequestBodyBuilderInner {
 
         Self {
             llm_model,
-            request_model: OpenAiRequestModel {
-                model: llm_model.to_string(),
-                tools: serde_json::from_str("[]").unwrap(),
-                messages,
-                max_tokens: None,
-                temperature: None,
-                top_p: None,
-                stream: None,
-                frequency_penalty: None,
-                presence_penalty: None,
-                n: None,
-                reasoning_effort: None,
-                verbosity: None,
-            },
+            request_model: OpenAiRequestModel::new(llm_model, messages),
             tools: vec![],
             tech_log: Default::default(),
         }
@@ -222,7 +183,7 @@ impl OpenAiRequestBodyBuilderInner {
     }
      */
 
-    pub fn get_model(&mut self, other_request_data: &OtherRequestData) -> OpenAiRequestModel {
+    pub fn get_model(&mut self) -> OpenAiRequestModel {
         if self.tools.len() > 0 {
             if self.request_model.tools.is_none() {
                 self.request_model.tools = Some(serde_json::to_value(&self.tools).unwrap());
@@ -231,19 +192,15 @@ impl OpenAiRequestBodyBuilderInner {
 
         let mut result = self.request_model.clone();
 
-        result.n = other_request_data.n;
-        result.presence_penalty = other_request_data.presence_penalty;
-        result.frequency_penalty = other_request_data.frequency_penalty;
-        result.top_p = other_request_data.top_p;
-        result.temperature = other_request_data.temperature;
-
-        if !other_request_data.think {
-            if let Some(first_message) = result.messages.first_mut() {
-                if first_message.is_system() {
-                    if self.llm_model.is_qwen3() {
-                        if let Some(content) = first_message.content.as_mut() {
-                            if !content.starts_with(QWEN_NO_THINK_PREFIX) {
-                                content.insert_str(0, QWEN_NO_THINK_PREFIX_WITH_CL_CR);
+        if let Some(qwen_think) = self.llm_model.is_qwen_think() {
+            if !qwen_think {
+                if let Some(first_message) = result.messages.first_mut() {
+                    if first_message.is_system() {
+                        if self.llm_model.is_qwen3() {
+                            if let Some(content) = first_message.content.as_mut() {
+                                if !content.starts_with(QWEN_NO_THINK_PREFIX) {
+                                    content.insert_str(0, QWEN_NO_THINK_PREFIX_WITH_CL_CR);
+                                }
                             }
                         }
                     }
