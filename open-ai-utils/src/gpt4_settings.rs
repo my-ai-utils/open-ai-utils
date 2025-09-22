@@ -6,5 +6,4 @@ pub struct Gpt4Settings {
     pub top_p: Option<f64>,
 
     pub temperature: Option<f64>,
-    pub think: bool, // Uses for qwen3
 }
