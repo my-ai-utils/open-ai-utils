@@ -35,12 +35,14 @@ impl OpenAiRequestBodyBuilder {
     pub fn from_history(
         system_prompt: impl Into<StrOrString<'static>>,
         history: Vec<OpenAiMessageModel>,
+        summary_message: Option<String>,
         llm_model: LlmModel,
     ) -> Self {
         Self {
             llm_model,
             inner: Mutex::new(OpenAiRequestBodyBuilderInner::from_history(
                 system_prompt,
+                summary_message,
                 history,
                 llm_model,
             )),

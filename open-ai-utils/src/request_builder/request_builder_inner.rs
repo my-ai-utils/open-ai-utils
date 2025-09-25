@@ -140,6 +140,7 @@ impl OpenAiRequestBodyBuilderInner {
 
     pub fn from_history(
         system_prompt: impl Into<StrOrString<'static>>,
+        summary_message: Option<String>,
         history: Vec<OpenAiMessageModel>,
         llm_model: LlmModel,
     ) -> Self {
@@ -150,6 +151,15 @@ impl OpenAiRequestBodyBuilderInner {
             tool_calls: None,
             tool_call_id: None,
         }];
+
+        if let Some(summary_message) = summary_message {
+            messages.push(OpenAiMessageModel {
+                role: SYSTEM_ROLE.to_owned(),
+                content: Some(summary_message),
+                tool_calls: None,
+                tool_call_id: None,
+            });
+        }
 
         messages.extend(history);
 
