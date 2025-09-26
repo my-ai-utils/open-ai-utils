@@ -154,7 +154,7 @@ impl OpenAiRequestBodyBuilderInner {
 
         if let Some(summary_message) = summary_message {
             messages.push(OpenAiMessageModel {
-                role: SYSTEM_ROLE.to_owned(),
+                role: USER_ROLE.to_owned(),
                 content: Some(summary_message),
                 tool_calls: None,
                 tool_call_id: None,
